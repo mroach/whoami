@@ -17,7 +17,7 @@ import (
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
-type RequestData struct {
+type requestData struct {
 	IP          string            `json:"ip"`
 	Headers     map[string]string `json:"headers"`
 	ISP         string            `json:"isp"`
@@ -30,15 +30,9 @@ type RequestData struct {
 	Hostname    string            `json:"hostname"`
 }
 
-type Styles struct {
-	Background  string
-	TableBorder string
-}
-
-type PageData struct {
+type pageData struct {
 	Title   string
-	Styles  Styles
-	Request *RequestData
+	Request *requestData
 }
 
 var funcMap = template.FuncMap{
@@ -51,10 +45,15 @@ func main() {
 
 	fileServer := http.FileServer(http.Dir("./static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-	mux.HandleFunc("GET /", htmlHandler)
 	mux.HandleFunc("GET /json", jsonHandler)
+	mux.HandleFunc("GET /text", textHandler)
 	mux.HandleFunc("GET /ip", ipHandler)
 	mux.HandleFunc("GET /healthz", healthHandler)
+	mux.HandleFunc("GET /", contentNegotiate(map[string]http.HandlerFunc{
+		"application/json": jsonHandler,
+		"text/html":        htmlHandler,
+		"text/plain":       textHandler,
+	}, "text/html"))
 
 	binding := fmt.Sprintf(":%v", listenPort())
 
@@ -72,11 +71,26 @@ func listenPort() int {
 	return 8080
 }
 
+func contentNegotiate(handlers map[string]http.HandlerFunc, fallback string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accept := r.Header.Get("accept")
+
+		for contentType, handler := range handlers {
+			if strings.Contains(accept, contentType) {
+				handler(w, r)
+				return
+			}
+		}
+
+		handler := handlers[fallback]
+		handler(w, r)
+	}
+}
+
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	rd := buildRequestdata(r)
-	page := &PageData{
+	page := &pageData{
 		Title:   rd.IP,
-		Styles:  *stylesForAgent(r.Header.Get("user-agent")),
 		Request: rd,
 	}
 
@@ -98,6 +112,31 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(rd)
 }
 
+func textHandler(w http.ResponseWriter, r *http.Request) {
+	rd := buildRequestdata(r)
+
+	w.Header().Add("content-type", "text/plain")
+
+	if rd.Hostname != "" {
+		fmt.Fprintf(w, "%-20s %s\n", "Hostname", rd.Hostname)
+	}
+	if rd.Prefix != "" {
+		fmt.Fprintf(w, "%-20s %s\n", "Prefix", rd.Prefix)
+	}
+	if rd.CountryCode != "" {
+		fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
+	}
+	if rd.ISP != "" {
+		fmt.Fprintf(w, "%-20s %s (AS%v)\n", "ISP", rd.ISP, rd.ASN)
+	}
+	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.ServerTime)
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "Headers\n")
+	for k, v := range rd.Headers {
+		fmt.Fprintf(w, "  %-40s %s\n", k, v)
+	}
+}
+
 func ipHandler(w http.ResponseWriter, r *http.Request) {
 	addr := remoteAddr(r)
 
@@ -110,10 +149,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "OK")
 }
 
-func buildRequestdata(r *http.Request) *RequestData {
+func buildRequestdata(r *http.Request) *requestData {
 	addr := remoteAddr(r)
 
-	rd := &RequestData{
+	rd := &requestData{
 		IP:         addr.String(),
 		ServerTime: time.Now().UTC().Format(time.DateTime) + " UTC",
 	}
@@ -162,6 +201,8 @@ func remoteAddr(r *http.Request) netip.Addr {
 	var host string
 	if val := r.Header.Get("x-real-ip"); val != "" {
 		host = val
+	} else if val := r.URL.Query().Get("__ip"); val != "" {
+		host = val
 	} else {
 		host, _, _ = net.SplitHostPort(r.RemoteAddr)
 	}
@@ -185,32 +226,4 @@ func lookupASN(addr netip.Addr) (*geoip2.ASN, error) {
 		return nil, err
 	}
 	return db.ASN(addr)
-}
-
-// Just for fun. Style the page based on the OS with a focus on old computers
-func stylesForAgent(agent string) *Styles {
-	if agent == "" || len(agent) == 0 {
-		return &Styles{Background: "white", TableBorder: "black"}
-	}
-
-	if strings.Contains(agent, "Mac_PowerPC") || strings.Contains(agent, "Macintosh") {
-		return &Styles{Background: "#cfcfe1", TableBorder: "#63639c"}
-	}
-
-	// Windows 2000
-	if strings.Contains(agent, "Windows NT 5.0") {
-		return &Styles{Background: "#A6CAF0", TableBorder: "#3A6EA5"}
-	}
-
-	// Windows XP
-	if strings.Contains(agent, "Windows NT 5.1") {
-		return &Styles{Background: "#A6CAF0", TableBorder: "#004EAC"}
-	}
-
-	// Maybe Windows NT 4
-	if strings.Contains(agent, "Windows NT") {
-		return &Styles{Background: "#DEDEDE", TableBorder: "#008080"}
-	}
-
-	return &Styles{Background: "#FFF7E9", TableBorder: "#b24d7a"}
 }

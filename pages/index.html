@@ -37,21 +37,30 @@
         font-size: 16px;
       }
       main {
+        padding: 20px;
         max-width: 1024px;
         margin: 0 auto;
-        padding-top: 18px;
       }
-      #ip {
-        background-color: {{.Styles.Background}};
-        font-family: monospace;
+      h1 {
+        margin: 10px 0 40px;
         padding: 0.3rem 0.8rem;
+
+        background-color: #FFF7E9;
+        border-bottom: solid #b24d7a 3px;
+        border-top: solid #b24d7a 3px;
+
+        text-align: center;
+
+        font-family: monospace;
+        font-size: 34px;
+        letter-spacing: 0.1rem;
       }
       table {
         border-collapse: collapse;
       }
       table td, table th {
-        background-color: {{.Styles.Background}};
-        border: solid {{.Styles.TableBorder}} 1px;
+        background-color: #FFF7E9;
+        border: solid #b24d7a 1px;
         padding: 0.3rem 0.8rem;
       }
       table th {
@@ -102,7 +111,7 @@
       </h1>
 
       <section>
-        <table bgcolor="{{.Styles.Background}}" bordercolor="{{.Styles.TableBorder}}" cellspacing="0" cellpadding="4" rules="rows" border="2">
+        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
           {{if .Request.Hostname }}
           <tr>
             <th>Hostname</th>
@@ -137,7 +146,7 @@
 
       <section>
         <h2>HTTP Headers</h2>
-        <table bgcolor="{{.Styles.Background}}" bordercolor="{{.Styles.TableBorder}}" cellspacing="0" cellpadding="4" rules="rows" border="2">
+        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
           {{- range $name, $value := .Request.Headers -}}
             <tr>
               <th>{{$name}}</th>
