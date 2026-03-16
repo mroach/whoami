@@ -59,7 +59,16 @@ func main() {
 
 	log.Printf("Listening on %s", binding)
 
-	log.Fatal(http.ListenAndServe(binding, mux))
+	log.Fatal(http.ListenAndServe(binding, logRequest(mux)))
+}
+
+func logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+		next.ServeHTTP(w, r)
+		elapsedTime := time.Since(startTime)
+		log.Printf("%s %s %s\n", r.Method, r.URL.Path, elapsedTime)
+	})
 }
 
 func listenPort() int {
