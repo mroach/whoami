@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="favicon.ico" />
+    <link rel="shortcut icon" href="favicon.ico" />
     <title>{{.Title}}</title>
     <style>
       *, *::before, *::after {
@@ -31,7 +33,7 @@
 
       /* */
       body {
-        background-image: url("/static/images/bg.gif");
+        background-image: url("images/bg.gif");
         background-repeat: repeat;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
         font-size: 16px;
@@ -139,7 +141,7 @@
             <th>Location</th>
             <td>
               {{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}
-              <img src="/static/images/flags/{{.Request.CountryCode | ToLower}}.png" alt="{{.Request.CountryName}}" />
+              <img src="images/flags/{{.Request.CountryCode | ToLower}}.png" alt="{{.Request.CountryName}}" />
             </td>
           </tr>
           {{end}}

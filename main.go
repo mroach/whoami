@@ -58,12 +58,12 @@ func main() {
 
 	mux := http.NewServeMux()
 	fileServer := http.FileServer(http.Dir("./static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	mux.Handle("GET /", fileServer)
 	mux.HandleFunc("GET /json", jsonHandler)
 	mux.HandleFunc("GET /text", textHandler)
 	mux.HandleFunc("GET /ip", ipHandler)
 	mux.HandleFunc("GET /healthz", healthHandler)
-	mux.HandleFunc("GET /", contentNegotiate(map[string]http.HandlerFunc{
+	mux.HandleFunc("GET /{$}", contentNegotiate(map[string]http.HandlerFunc{
 		"application/json": jsonHandler,
 		"text/html":        htmlHandler,
 		"text/plain":       textHandler,
