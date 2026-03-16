@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -76,12 +77,23 @@ func main() {
 	log.Fatal(http.ListenAndServe(binding, logRequest(mux)))
 }
 
+type StatusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *StatusRecorder) WriteHeader(code int) {
+	r.status = code
+	r.ResponseWriter.WriteHeader(code)
+}
+
 func logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
-		next.ServeHTTP(w, r)
+		rec := &StatusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
 		elapsedTime := time.Since(startTime)
-		log.Printf("%s %s %s\n", r.Method, r.URL.Path, elapsedTime)
+		slog.Info("request", "method", r.Method, "path", r.URL.Path, "status", rec.status, "time", elapsedTime)
 	})
 }
 
