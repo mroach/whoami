@@ -38,11 +38,25 @@ type pageData struct {
 var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 }
+
 var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles("pages/index.html"))
+var mmCity *geoip2.Reader
+var mmASN *geoip2.Reader
 
 func main() {
-	mux := http.NewServeMux()
+	var err error
 
+	mmCity, err = geoip2.Open("data/maxmind/GeoLite2-City.mmdb")
+	if err != nil {
+		log.Printf("WARN: %v", err)
+	}
+
+	mmASN, err = geoip2.Open("data/maxmind/GeoLite2-ASN.mmdb")
+	if err != nil {
+		log.Printf("WARN: %v", err)
+	}
+
+	mux := http.NewServeMux()
 	fileServer := http.FileServer(http.Dir("./static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 	mux.HandleFunc("GET /json", jsonHandler)
@@ -220,19 +234,16 @@ func remoteAddr(r *http.Request) netip.Addr {
 }
 
 func locateIP(addr netip.Addr) (*geoip2.City, error) {
-	db, err := geoip2.Open("data/maxmind/GeoLite2-City.mmdb")
-	if err != nil {
-		log.Printf("WARN: %v", err)
-		return nil, err
+	if mmCity == nil {
+		return nil, fmt.Errorf("City database not loaded")
 	}
-	return db.City(addr)
+	return mmCity.City(addr)
 }
 
 func lookupASN(addr netip.Addr) (*geoip2.ASN, error) {
-	db, err := geoip2.Open("data/maxmind/GeoLite2-ASN.mmdb")
-	if err != nil {
-		log.Printf("WARN: %v", err)
-		return nil, err
+	if mmASN == nil {
+		return nil, fmt.Errorf("ASN database not loaded")
 	}
-	return db.ASN(addr)
+
+	return mmASN.ASN(addr)
 }
