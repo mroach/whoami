@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
@@ -49,52 +51,34 @@ func main() {
 
 	mmCity, err = geoip2.Open("data/maxmind/GeoLite2-City.mmdb")
 	if err != nil {
-		log.Printf("WARN: %v", err)
+		slog.Warn("MaxMind City DB Load", "err", err)
 	}
 
 	mmASN, err = geoip2.Open("data/maxmind/GeoLite2-ASN.mmdb")
 	if err != nil {
-		log.Printf("WARN: %v", err)
+		slog.Warn("MaxMind ASN DB Load", "err", err)
 	}
 
-	mux := http.NewServeMux()
-	fileServer := http.FileServer(http.Dir("./static"))
-	mux.Handle("GET /", fileServer)
-	mux.HandleFunc("GET /json", jsonHandler)
-	mux.HandleFunc("GET /text", textHandler)
-	mux.HandleFunc("GET /ip", ipHandler)
-	mux.HandleFunc("GET /healthz", healthHandler)
-	mux.HandleFunc("GET /{$}", contentNegotiate(map[string]http.HandlerFunc{
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Heartbeat("/healthz"))
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	r.Get("/json", jsonHandler)
+	r.Get("/text", textHandler)
+	r.Get("/ip", ipHandler)
+	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
 		"application/json": jsonHandler,
 		"text/html":        htmlHandler,
 		"text/plain":       textHandler,
 	}, "text/html"))
+	fileServer := http.FileServer(http.Dir("./static"))
+	r.Handle("/*", fileServer)
 
 	binding := fmt.Sprintf(":%v", listenPort())
-
-	log.Printf("Listening on %s", binding)
-
-	log.Fatal(http.ListenAndServe(binding, logRequest(mux)))
-}
-
-type StatusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-func (r *StatusRecorder) WriteHeader(code int) {
-	r.status = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
-func logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-		rec := &StatusRecorder{ResponseWriter: w, status: http.StatusOK}
-		next.ServeHTTP(rec, r)
-		elapsedTime := time.Since(startTime)
-		slog.Info("request", "method", r.Method, "path", r.URL.Path, "status", rec.status, "time", elapsedTime)
-	})
+	slog.Info("HTTP server listening", "binding", binding)
+	log.Fatal(http.ListenAndServe(binding, r))
 }
 
 func listenPort() int {
@@ -179,11 +163,6 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, addr.String())
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "text/plain")
-	fmt.Fprintln(w, "OK")
-}
-
 func buildRequestdata(r *http.Request) *requestData {
 	addr := remoteAddr(r)
 
@@ -214,9 +193,9 @@ func buildRequestdata(r *http.Request) *requestData {
 		rd.CountryCode = location.Country.ISOCode
 		rd.CountryName = location.Country.Names.English
 		rd.Prefix = location.Traits.Network.String()
-		log.Printf("Location for %v: %s, %s", addr, rd.City, rd.CountryCode)
+		slog.Info("City lookup OK", "ip", addr, "city", rd.City, "country", rd.CountryCode)
 	} else {
-		log.Printf("Location lookup failed for %v: %v", addr, err)
+		slog.Error("City lookup", "ip", addr, "err", err)
 	}
 
 	// Lookup the ASN which is typically the ISP. Close enough.
@@ -224,9 +203,9 @@ func buildRequestdata(r *http.Request) *requestData {
 	if err == nil {
 		rd.ISP = asn.AutonomousSystemOrganization
 		rd.ASN = asn.AutonomousSystemNumber
-		log.Printf("ASN for %v: %s (AS%v)", addr, rd.ISP, rd.ASN)
+		slog.Info("ASN lookup OK", "ip", addr, "org", rd.ISP, "asn", rd.ASN)
 	} else {
-		log.Printf("ASN Lookup failed for %s: %v", addr, err)
+		slog.Error("ASN lookup", "ip", addr, "err", err)
 	}
 
 	return rd
