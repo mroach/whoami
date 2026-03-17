@@ -36,7 +36,7 @@
         background-image: url("images/bg.gif");
         background-repeat: repeat;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
-        font-size: 16px;
+        font-size: 12px;
       }
       main {
         padding: 20px;
@@ -77,6 +77,11 @@
       }
       table td {
         word-break: break-word;
+      }
+      @media only screen and (min-width: 1024px) {
+        body {
+          font-size: 16px;
+        }
       }
       @media only screen and (max-width: 800px) {
         html, body {
