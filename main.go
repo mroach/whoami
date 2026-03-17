@@ -30,7 +30,6 @@ type requestData struct {
 	CountryCode string            `json:"country_code"`
 	CountryName string            `json:"country_name"`
 	ServerTime  string            `json:"server_time"`
-	Hostname    string            `json:"hostname"`
 }
 
 type pageData struct {
@@ -136,9 +135,6 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/plain")
 
-	if rd.Hostname != "" {
-		fmt.Fprintf(w, "%-20s %s\n", "Hostname", rd.Hostname)
-	}
 	if rd.Prefix != "" {
 		fmt.Fprintf(w, "%-20s %s\n", "Prefix", rd.Prefix)
 	}
@@ -180,11 +176,6 @@ func buildRequestdata(r *http.Request) *requestData {
 		}
 	}
 	rd.Headers = headers
-
-	hosts, err := net.LookupAddr(addr.String())
-	if err == nil && len(hosts) > 0 {
-		rd.Hostname = hosts[0]
-	}
 
 	// Lookup the location based on the IP address
 	location, err := locateIP(addr)
