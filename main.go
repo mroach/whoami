@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
 	"os"
+	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -67,6 +70,7 @@ func main() {
 	r.Get("/json", jsonHandler)
 	r.Get("/text", textHandler)
 	r.Get("/ip", ipHandler)
+	r.Get("/images/asn/{asn}.png", getAsnImage)
 	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
 		"application/json": jsonHandler,
 		"text/html":        htmlHandler,
@@ -157,6 +161,53 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/plain")
 	fmt.Fprintln(w, addr.String())
+}
+
+func getAsnImage(w http.ResponseWriter, r *http.Request) {
+	asn := chi.URLParam(r, "asn")
+
+	if isMatch, err := regexp.MatchString("^[0-9]+$", asn); err != nil || !isMatch {
+		slog.Info("Bad ASN image request", "asn", asn)
+		http.NotFound(w, r)
+		return
+	}
+
+	dir := "./cache/images/asn"
+	imagePath := filepath.Join(dir, asn+".png")
+	if _, err := os.Stat(imagePath); err == nil {
+		slog.Debug("Found matching ASN image", "asn", asn)
+		http.ServeFile(w, r, imagePath)
+		return
+	}
+
+	slog.Info("No cached ASN logo found", "path", imagePath)
+
+	sourceUrl := fmt.Sprintf("https://static.ui.com/asn/%s_101x101.png", asn)
+	resp, err := http.Get(sourceUrl)
+	if err != nil {
+		slog.Info("Failed to download ASN logo", "url", sourceUrl, "err", err)
+		http.NotFound(w, r)
+		return
+	}
+
+	slog.Info("Trying to fetch ASN logo", "url", sourceUrl)
+
+	if resp.StatusCode != 200 {
+		slog.Info("No ASN logo", "url", sourceUrl, "status", resp.StatusCode)
+		http.NotFound(w, r)
+		return
+	}
+
+	out, err := os.Create(imagePath)
+	if err != nil {
+		slog.Warn("Failed to save ASN logo", "path", imagePath, "err", err)
+		http.NotFound(w, r)
+		return
+	}
+
+	slog.Info("Saving ASN logo", "asn", asn, "path", imagePath)
+	io.Copy(out, resp.Body)
+	http.ServeFile(w, r, imagePath)
 }
 
 func buildRequestdata(r *http.Request) *requestData {

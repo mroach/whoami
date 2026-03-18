@@ -147,7 +147,10 @@
           {{if .Request.ISP}}
           <tr>
             <th>ISP</th>
-            <td>{{.Request.ISP}} (AS{{.Request.ASN}})</td>
+            <td>
+              {{.Request.ISP}} (AS{{.Request.ASN}})
+              <img src="images/asn/{{.Request.ASN}}.png" alt="" style="height: 1.5em; vertical-align: middle;" />
+            </td>
           </tr>
           {{end}}
           <tr>
