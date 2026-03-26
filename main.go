@@ -139,6 +139,11 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/plain")
 
+	fmt.Fprintf(w, "%s\n", strings.Repeat("-", strings.Count(rd.IP, "")-1))
+	fmt.Fprintf(w, "%s\n", rd.IP)
+	fmt.Fprintf(w, "%s\n\n", strings.Repeat("-", strings.Count(rd.IP, "")-1))
+	fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
+
 	if rd.Prefix != "" {
 		fmt.Fprintf(w, "%-20s %s\n", "Prefix", rd.Prefix)
 	}
@@ -150,7 +155,7 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.ServerTime)
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "Headers\n")
+	fmt.Fprintf(w, "HTTP Headers\n")
 	for k, v := range rd.Headers {
 		fmt.Fprintf(w, "  %-40s %s\n", k, v)
 	}
