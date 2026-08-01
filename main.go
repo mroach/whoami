@@ -29,7 +29,6 @@ type requestData struct {
 	ISP         string            `json:"isp"`
 	ASN         uint              `json:"asn"`
 	City        string            `json:"city"`
-	Prefix      string            `json:"prefix"`
 	CountryCode string            `json:"country_code"`
 	CountryName string            `json:"country_name"`
 	ServerTime  string            `json:"server_time"`
@@ -144,9 +143,6 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n\n", strings.Repeat("-", strings.Count(rd.IP, "")-1))
 	fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
 
-	if rd.Prefix != "" {
-		fmt.Fprintf(w, "%-20s %s\n", "Prefix", rd.Prefix)
-	}
 	if rd.CountryCode != "" {
 		fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
 	}
@@ -246,7 +242,6 @@ func buildRequestdata(r *http.Request) *requestData {
 		rd.City = location.City.Names.English
 		rd.CountryCode = location.Country.ISOCode
 		rd.CountryName = location.Country.Names.English
-		rd.Prefix = location.Traits.Network.String()
 		slog.Info("City lookup OK", "ip", addr, "city", rd.City, "country", rd.CountryCode)
 	} else {
 		slog.Error("City lookup", "ip", addr, "err", err)
