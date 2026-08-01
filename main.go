@@ -223,7 +223,14 @@ func buildRequestdata(r *http.Request) *requestData {
 		ServerTime: time.Now().UTC().Format(time.DateTime) + " UTC",
 	}
 
-	ignoreHeaders := []string{"x-cluster-client-ip", "x-real-ip"}
+	// don't show headers that were set by a reverse proxy
+	ignoreHeaders := []string{
+		"x-cluster-client-ip",
+		"x-real-ip",
+		"x-forwarded-for",
+		"x-forwarded-proto",
+		"x-forwarded-host",
+	}
 	headers := make(map[string]string)
 	for k, v := range r.Header {
 		found := slices.Contains(ignoreHeaders, strings.ToLower(k))
@@ -262,6 +269,8 @@ func remoteAddr(r *http.Request) netip.Addr {
 	var host string
 	if val := r.Header.Get("x-real-ip"); val != "" {
 		host = val
+	} else if val := r.Header.Get("x-forwarded-for"); val != "" {
+		host = strings.Split(val, ",")[0]
 	} else if val := r.URL.Query().Get("__ip"); val != "" {
 		host = val
 	} else {
