@@ -1,3 +1,36 @@
+{{define "ipInfo"}}
+<table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
+  <tr>
+    <th>{{.IPStack}} Address</th>
+    <td>{{.IP}}</td>
+  </tr>
+
+  <tr>
+    <th>Location</th>
+    <td>
+      {{if .CountryCode}}
+        <span>{{if .City}}{{.City}}, {{end}}{{.CountryName}}</span>
+        <img src="images/flags/{{.CountryCode | ToLower}}.png" alt="{{.CountryName}}" class="flag" />
+      {{else}}
+        <i>Unknown</i>
+      {{end}}
+    </td>
+  </tr>
+
+  <tr>
+    <th>ISP</th>
+    <td>
+      {{if .ISP}}
+        <span>{{.ISP}} (AS{{.ASN}})</span>
+        <img src="images/asn/{{.ASN}}.png" alt="" class="asnlogo" />
+      {{else}}
+        <i>Unknown</i>
+      {{end}}
+    </td>
+  </tr>
+</table>
+{{end}}
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -156,47 +189,18 @@
       }
 
       function tryStackCallback(obj) {
-        displayOtherStack(obj.data);
+        displayOtherStackHTML(obj);
       }
 
-      function displayOtherStack(data) {
-        setDualStackStatus(null)
-
-        var elDS = document.getElementById("dual-stack");
-        var tables = elDS.getElementsByTagName("table")[0];
-        elDS.getElementsByTagName("table")[0].style.display = "";
-
-        var elIpRow = document.getElementById("dual-stack-ip");
-        setInnerText(elIpRow.getElementsByTagName("th")[0], data.ipStack + " Address");
-        setInnerText(elIpRow.getElementsByTagName("td")[0], data.ip);
-
-        var elIsp = document.getElementById("dual-stack-isp").getElementsByTagName("td")[0];
-        var elIspText = document.createElement("span");
-        setInnerText(elIspText, data.isp + " (AS" + data.asn + ")");
-        elIsp.appendChild(elIspText);
-
-        var elLogo = document.createElement("img");
-        elLogo.src = "images/asn/" + data.asn + ".png";
-        elLogo.className = "asnlogo";
-        elIsp.appendChild(elLogo);
-
-        var elLocation = document.getElementById("dual-stack-location").getElementsByTagName("td")[0];
-
-        var elLocationText = document.createElement("span");
-        setInnerText(elLocationText, data.city + ", " + data.country_name);
-        elLocation.appendChild(elLocationText);
-
-        var elFlag = document.createElement("img");
-        elFlag.src = "images/flags/" + data.country_code.toLowerCase() + ".png";
-        elFlag.alt = data.country_name;
-        elFlag.className = "flag";
-        elLocation.appendChild(elFlag);
+      function displayOtherStackHTML(obj) {
+        setDualStackStatus("Your client also supports " + obj.data.ipStack + ".")
+        document.getElementById("dual-stack-info").innerHTML = obj.html;
       }
 
       function tryOtherStackJSONP(host) {
-        var url = window.location.protocol + "//" + host + "/jsonp?callback=tryStackCallback";
+        var url = window.location.protocol + "//" + host + "/ip_info?callback=tryStackCallback";
 
-        setDualStackStatus("Attempting JSONP request to " + url + "...");
+        setDualStackStatus("Attempting request to " + host + "...");
 
         var script = document.createElement("script");
         script.type = "text/javascript";
@@ -206,7 +210,7 @@
       }
 
       function tryOtherStackXHR(host) {
-        var url = window.location.protocol + "//" + host + "/json";
+        var url = window.location.protocol + "//" + host + "/ip_info";
 
         setDualStackStatus("Attempting XHR request to " + host + "...");
 
@@ -220,8 +224,8 @@
             }
 
             if (xhr.status == 200) {
-              var data = JSON.parse(xhr.responseText);
-              displayOtherStack(data);
+              var obj = JSON.parse(xhr.responseText);
+              displayOtherStackHTML(obj);
               return;
             }
 
@@ -265,70 +269,40 @@
       </h1>
 
       <div class="section">
-        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
-          <tr>
-            <th>Location</th>
-            <td>
-              {{if .Request.CountryCode}}
-                <span>{{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}</span>
-                <img src="images/flags/{{.Request.CountryCode | ToLower}}.png" alt="{{.Request.CountryName}}" class="flag" />
-              {{else}}
-                <i>Unknown</i>
-              {{end}}
-            </td>
-          </tr>
-
-          <tr>
-            <th>ISP</th>
-            <td>
-              {{if .Request.ISP}}
-                <span>{{.Request.ISP}} (AS{{.Request.ASN}})</span>
-                <img src="images/asn/{{.Request.ASN}}.png" alt="" class="asnlogo" />
-              {{else}}
-                <i>Unknown</i>
-              {{end}}
-            </td>
-          </tr>
-
-          <tr>
-            <th>Server Time</th>
-            <td>{{.Request.ServerTime}}</td>
-          </tr>
-        </table>
+        <h2>Connection</h2>
+        <p style="font-style: italic">Your browser connected with {{.Request.IPStack}}.</p>
+        {{template "ipInfo" .Request}}
       </div>
 
       <div class="section" id="dual-stack" style="display: none">
         <h2>Dual-Stack IP</h2>
-
-        <p id="dual-stack-status" style="font-style: italic;">No status. JavaScript support is probably lacking in this browser.</p>
-
-        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2" style="display: none">
-          <tr id="dual-stack-ip">
-            <th>Address</th>
-            <td></td>
-          </tr>
-
-          <tr id="dual-stack-location">
-            <th>Location</th>
-            <td></td>
-          </tr>
-
-          <tr id="dual-stack-isp">
-            <th>ISP</th>
-            <td></td>
-          </tr>
-        </table>
+        <p id="dual-stack-status" style="font-style: italic">No status. JavaScript support is probably lacking in this browser.</p>
+        <div id="dual-stack-info"></div>
       </div>
 
       <div class="section">
         <h2>HTTP Headers</h2>
         <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
-          {{- range $name, $value := .Request.Headers -}}
+          {{- range $name, $value := .Request.Headers }}
             <tr>
               <th>{{$name}}</th>
               <td>{{$value}}</td>
             </tr>
-          {{- end -}}
+          {{- end }}
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>Server</h2>
+        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
+          <tr>
+            <th>Time</th>
+            <td>{{.Request.Server.Time}}</td>
+          </tr>
+          <tr>
+            <th>Go Version</th>
+            <td>{{.Request.Server.GoVersion}}</td>
+          </tr>
         </table>
       </div>
     </div>

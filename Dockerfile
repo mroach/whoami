@@ -11,11 +11,13 @@ COPY --parents static pages /opt/app/
 
 FROM gcr.io/distroless/base-debian13 AS release
 
+ARG app_version
+
 WORKDIR /opt/app
 
 COPY --from=build /opt/app ./
 
-ENV PORT=8080
+ENV PORT=8080 APP_VERSION=${app_version}
 EXPOSE 8080
 USER nonroot:nonroot
 

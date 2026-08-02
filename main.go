@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -24,6 +26,12 @@ import (
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
+type serverData struct {
+	Time       string `json:"time"`
+	GoVersion  string `json:"go_version"`
+	AppVersion string `json:"app_version"`
+}
+
 type requestData struct {
 	IP          string            `json:"ip"`
 	IPStack     string            `json:"ipStack"`
@@ -33,18 +41,13 @@ type requestData struct {
 	City        string            `json:"city"`
 	CountryCode string            `json:"country_code"`
 	CountryName string            `json:"country_name"`
-	ServerTime  string            `json:"server_time"`
+	Server      *serverData       `json:"server"`
 }
 
 type dualStackConfig struct {
 	IPv4Host string `json:"IPv4"`
 	IPv6Host string `json:"IPv6"`
 	TryStack string `json:"tryStack"`
-}
-
-type jsonpResponse struct {
-	Meta any `json:"meta"`
-	Data any `json:"data"`
 }
 
 type pageData struct {
@@ -87,7 +90,7 @@ func main() {
 	}))
 
 	r.Get("/json", jsonHandler)
-	r.Get("/jsonp", jsonpHandler)
+	r.Get("/ip_info", ipInfoHandler)
 	r.Get("/text", textHandler)
 	r.Get("/ip", ipHandler)
 	r.Get("/images/asn/{asn}.png", getAsnImage)
@@ -150,6 +153,10 @@ func buildDualStack(r *http.Request) *dualStackConfig {
 }
 
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
+	renderHtml(w, r, "index.html")
+}
+
+func renderHtml(w http.ResponseWriter, r *http.Request, templateName string) {
 	rd := buildRequestdata(r)
 
 	page := &pageData{
@@ -160,7 +167,7 @@ func htmlHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/html")
 
-	err := templates.Funcs(funcMap).ExecuteTemplate(w, "index.html", page)
+	err := templates.Funcs(funcMap).ExecuteTemplate(w, templateName, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -176,26 +183,27 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(rd)
 }
 
-func jsonpHandler(w http.ResponseWriter, r *http.Request) {
+// used for XHR to get dual-stack IP info.
+// older browsers will ask for jsonp by specifying the `callback` URL param.
+// in other cases, render plain JS.
+func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 	data := buildRequestdata(r)
 
-	callback := r.URL.Query().Get("callback")
-	if callback == "" {
-		http.Error(w, "missing jsonp callback name", http.StatusBadRequest)
-		return
-	}
+	var buf bytes.Buffer
+	templates.Funcs(funcMap).ExecuteTemplate(&buf, "ipInfo", data)
 
-	resp := &jsonpResponse{
-		Data: data,
-	}
+	payload, _ := json.Marshal(struct {
+		Data any    `json:"data"`
+		HTML string `json:"html"`
+	}{HTML: buf.String(), Data: data})
 
 	w.Header().Add("content-type", "text/javascript")
-	w.Write([]byte(callback + "("))
 
-	enc := json.NewEncoder(w)
-	enc.Encode(resp)
-
-	w.Write([]byte(")"))
+	if callback := r.URL.Query().Get("callback"); callback != "" {
+		fmt.Fprintf(w, "%s(%s);", template.JSEscapeString(callback), payload)
+	} else {
+		w.Write(payload)
+	}
 }
 
 func textHandler(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +222,8 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	if rd.ISP != "" {
 		fmt.Fprintf(w, "%-20s %s (AS%v)\n", "ISP", rd.ISP, rd.ASN)
 	}
-	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.ServerTime)
+	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.Server.Time)
+	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "HTTP Headers\n")
 	for k, v := range rd.Headers {
@@ -286,9 +295,13 @@ func buildRequestdata(r *http.Request) *requestData {
 	}
 
 	rd := &requestData{
-		IP:         addr.String(),
-		IPStack:    ipStack,
-		ServerTime: time.Now().UTC().Format(time.DateTime) + " UTC",
+		IP:      addr.String(),
+		IPStack: ipStack,
+		Server: &serverData{
+			Time:       time.Now().UTC().Format(time.DateTime) + " UTC",
+			GoVersion:  fmt.Sprintf("%s %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
+			AppVersion: os.Getenv("APP_VERSION"),
+		},
 	}
 
 	// don't show headers that were set by a reverse proxy
