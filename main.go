@@ -67,6 +67,11 @@ var mmASN *geoip2.Reader
 func main() {
 	var err error
 
+	// reconfigure default logging to allow customising the level
+	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: getLogLevel()})
+	logger := slog.New(logHandler)
+	slog.SetDefault(logger)
+
 	mmCity, err = geoip2.Open("data/maxmind/GeoLite2-City.mmdb")
 	if err != nil {
 		slog.Warn("MaxMind City DB Load", "err", err)
@@ -105,6 +110,21 @@ func main() {
 	binding := fmt.Sprintf(":%v", listenPort())
 	slog.Info("HTTP server listening", "binding", binding)
 	log.Fatal(http.ListenAndServe(binding, r))
+}
+
+func getLogLevel() slog.Level {
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }
 
 func listenPort() int {
@@ -347,6 +367,8 @@ func buildRequestdata(r *http.Request) *requestData {
 
 func remoteAddr(r *http.Request) netip.Addr {
 	raddr := r.RemoteAddr
+
+	slog.Debug("Remote address detected as", "raddr", raddr)
 
 	// there may be a client port e.g. `10.8.0.1:23422` or `[::1]:34029`. Drop the port.
 	if m, _ := regexp.MatchString(":[0-9]+$", raddr); m {
