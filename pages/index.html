@@ -64,7 +64,7 @@
         margin: 0.3em 0;
         padding: 0;
       }
-      /* */
+
       body {
         background-image: url("images/bg.gif");
         background-repeat: repeat;
@@ -298,6 +298,10 @@
           <tr>
             <th>Time</th>
             <td>{{.Request.Server.Time}}</td>
+          </tr>
+          <tr>
+            <th>App Version</th>
+            <td>{{.Request.Server.AppVersion}}</td>
           </tr>
           <tr>
             <th>Go Version</th>
