@@ -76,6 +76,7 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Heartbeat("/healthz"))
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -332,17 +333,19 @@ func buildRequestdata(r *http.Request) *requestData {
 }
 
 func remoteAddr(r *http.Request) netip.Addr {
-	var host string
-	if val := r.Header.Get("x-real-ip"); val != "" {
-		host = val
-	} else if val := r.Header.Get("x-forwarded-for"); val != "" {
-		host = strings.Split(val, ",")[0]
-	} else if val := r.URL.Query().Get("__ip"); val != "" {
-		host = val
-	} else {
-		host, _, _ = net.SplitHostPort(r.RemoteAddr)
+	raddr := r.RemoteAddr
+
+	// there may be a client port e.g. `10.8.0.1:23422` or `[::1]:34029`. Drop the port.
+	if m, _ := regexp.MatchString(":[0-9]+$", raddr); m {
+		host, _, _ := net.SplitHostPort(raddr)
+		slog.Debug("Found a port in the address", "old", raddr, "new", host)
+		raddr = host
 	}
-	addr, _ := netip.ParseAddr(host)
+
+	addr, err := netip.ParseAddr(raddr)
+	if err != nil {
+		slog.Error("Failed to parse the host", "raddr", raddr, "err", err)
+	}
 	return addr
 }
 
