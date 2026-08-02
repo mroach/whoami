@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="favicon.ico" />
     <link rel="shortcut icon" href="favicon.ico" />
     <title>{{.Title}}</title>
-    <style>
+    <style type="text/css">
       *, *::before, *::after {
         box-sizing: border-box
       }
@@ -38,7 +38,7 @@
         font-family: Verdana, Geneva, Tahoma, sans-serif;
         font-size: 12px;
       }
-      main {
+      div.main {
         padding: 20px;
         max-width: 1024px;
         margin: 0 auto;
@@ -68,7 +68,7 @@
       table th {
         text-align: left;
       }
-      section {
+      div.section {
         margin-top: 18px;
         margin-bottom: 18px;
       }
@@ -77,6 +77,17 @@
       }
       table td {
         word-break: break-word;
+      }
+      .flag {
+        vertical-align: middle;
+        max-height: 1.5em;
+        margin: 0 0.5em;
+      }
+      .asnlogo {
+        vertical-align: middle;
+        height: 1.5em;
+        width: 1.5em;
+        margin: 0 0.5em;
       }
       @media only screen and (min-width: 1024px) {
         body {
@@ -89,7 +100,7 @@
           font-size: 14px;
         }
 
-        main {
+        div.main {
           padding: 0
         }
 
@@ -97,7 +108,7 @@
           font-size: 4.5vw;
           font-weight: lighter;
           letter-spacing: -0.1rem;
-          padding: 0.3rem 0; 
+          padding: 0.3rem 0;
           margin-bottom: 1.5rem;
         }
 
@@ -122,41 +133,194 @@
         }
       }
     </style>
+    <script type="text/javascript">
+      // Keep the JS compatible with the IE6, FF12-era of browsers
+
+      function setInnerText(el, text) {
+        if ("textContent" in el) {
+          el.textContent = text;
+        } else {
+          el.innerText = text; // IE6-8
+        }
+      }
+
+      function setDualStackStatus(status) {
+        var elStatus = document.getElementById("dual-stack-status");
+
+        if (status == null || status == "") {
+          elStatus.style.display = "none";
+          return;
+        }
+        elStatus.style.display = "block";
+        setInnerText(elStatus, status);
+      }
+
+      function tryStackCallback(obj) {
+        displayOtherStack(obj.data);
+      }
+
+      function displayOtherStack(data) {
+        setDualStackStatus(null)
+
+        var elDS = document.getElementById("dual-stack");
+        var tables = elDS.getElementsByTagName("table")[0];
+        elDS.getElementsByTagName("table")[0].style.display = "";
+
+        var elIpRow = document.getElementById("dual-stack-ip");
+        setInnerText(elIpRow.getElementsByTagName("th")[0], data.ipStack + " Address");
+        setInnerText(elIpRow.getElementsByTagName("td")[0], data.ip);
+
+        var elIsp = document.getElementById("dual-stack-isp").getElementsByTagName("td")[0];
+        var elIspText = document.createElement("span");
+        setInnerText(elIspText, data.isp + " (AS" + data.asn + ")");
+        elIsp.appendChild(elIspText)
+
+        var elLogo = document.createElement("img");
+        elLogo.src = "images/asn/" + data.asn + ".png";
+        elLogo.className = "asnlogo";
+        elIsp.appendChild(elLogo);
+
+        var elLocation = document.getElementById("dual-stack-location").getElementsByTagName("td")[0];
+
+        var elLocationText = document.createElement("span");
+        setInnerText(elLocationText, data.city + ", " + data.country_name);
+        elLocation.appendChild(elLocationText);
+
+        var elFlag = document.createElement("img");
+        elFlag.src = "images/flags/" + data.country_code.toLowerCase() + ".png";
+        elFlag.alt = data.country_name;
+        elFlag.className = "flag";
+        elLocation.appendChild(elFlag);
+      }
+
+      function tryOtherStackJSONP(host) {
+        var url = window.location.protocol + "//" + host + "/jsonp?callback=tryStackCallback";
+
+        setDualStackStatus("Attempting JSONP request to " + url + "...");
+
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = url;
+        var head = document.getElementsByTagName("head")[0] || document.documentElement;
+        head.appendChild(script);
+      }
+
+      function tryOtherStackXHR(host) {
+        var url = window.location.protocol + "//" + host + "/json";
+
+        setDualStackStatus("Attempting XHR request to " + host + "...");
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState == 4) {
+            if (xhr.status == 0) {
+              setDualStackStatus("Request failed. Dual-stack IP appears to be unsupported by your network or client.");
+              return;
+            }
+
+            if (xhr.status == 200) {
+              var data = JSON.parse(xhr.responseText);
+              displayOtherStack(data);
+              return;
+            }
+
+            setDualStackStatus("Server responed with HTTP " + xhr.status + ".");
+          }
+        }
+        xhr.send(null)
+      }
+
+      function tryOtherStack() {
+        var conf = {{.DualStack}};
+        var tryStack = conf.tryStack;
+        var tryHost = conf[tryStack];
+
+        // server may not have alt-stack hosts configured
+        if (tryHost == "") {
+          return;
+        }
+
+        document.getElementById("dual-stack").style.display = "block";
+
+        // IE6 doesn't support XHR to other domains, nor does it support `JSON.parse`.
+        // XHR is a better user experience since we can detect failures, so prefer that.
+        // For old browsers, try with JSONP
+        if ("XMLHttpRequest" in window && "JSON" in window && "parse" in JSON) {
+          tryOtherStackXHR(tryHost);
+        } else {
+          tryOtherStackJSONP(tryHost);
+        }
+      }
+
+      window.onload = function() {
+        tryOtherStack();
+      }
+    </script>
   </head>
   <body>
-    <main>
+    <div class="main">
       <h1>
         <span id="ip">{{.Request.IP}}</span>
       </h1>
 
-      <section>
+      <div class="section">
         <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
-          {{if .Request.CountryCode}}
           <tr>
             <th>Location</th>
             <td>
-              {{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}
-              <img src="images/flags/{{.Request.CountryCode | ToLower}}.png" alt="{{.Request.CountryName}}" />
+              {{if .Request.CountryCode}}
+                <span>{{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}</span>
+                <img src="images/flags/{{.Request.CountryCode | ToLower}}.png" alt="{{.Request.CountryName}}" class="flag" />
+              {{else}}
+                <i>Unknown</i>
+              {{end}}
             </td>
           </tr>
-          {{end}}
-          {{if .Request.ISP}}
+
           <tr>
             <th>ISP</th>
             <td>
-              {{.Request.ISP}} (AS{{.Request.ASN}})
-              <img src="images/asn/{{.Request.ASN}}.png" alt="" style="height: 1.5em; vertical-align: middle;" />
+              {{if .Request.ISP}}
+                <span>{{.Request.ISP}} (AS{{.Request.ASN}})</span>
+                <img src="images/asn/{{.Request.ASN}}.png" alt="" class="asnlogo" />
+              {{else}}
+                <i>Unknown</i>
+              {{end}}
             </td>
           </tr>
-          {{end}}
+
           <tr>
             <th>Server Time</th>
             <td>{{.Request.ServerTime}}</td>
           </tr>
         </table>
-      </section>
+      </div>
 
-      <section>
+      <div class="section" id="dual-stack" style="display: none">
+        <h2>Dual-Stack IP</h2>
+
+        <p id="dual-stack-status" style="font-style: italic;">No status. JavaScript support is probably lacking in this browser.</p>
+
+        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2" style="display: none">
+          <tr id="dual-stack-ip">
+            <th>Address</th>
+            <td></td>
+          </tr>
+
+          <tr id="dual-stack-location">
+            <th>Location</th>
+            <td></td>
+          </tr>
+
+          <tr id="dual-stack-isp">
+            <th>ISP</th>
+            <td></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="section">
         <h2>HTTP Headers</h2>
         <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
           {{- range $name, $value := .Request.Headers -}}
@@ -166,7 +330,7 @@
             </tr>
           {{- end -}}
         </table>
-      </section>
-    </main>
+      </div>
+    </div>
   </body>
 </html>

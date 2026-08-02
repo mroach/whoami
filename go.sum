@@ -1,5 +1,7 @@
 github.com/go-chi/chi/v5 v5.2.5 h1:Eg4myHZBjyvJmAFjFvWgrqDTXFyOzjj7YIm3L3mu6Ug=
 github.com/go-chi/chi/v5 v5.2.5/go.mod h1:X7Gx4mteadT3eDOMTsXzmI4/rwUpOwBHLpAfupzFJP0=
+github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
+github.com/go-chi/cors v1.2.2/go.mod h1:sSbTewc+6wYHBBCW7ytsFSn836hqM7JxpglAy2Vzc58=
 github.com/oschwald/geoip2-golang/v2 v2.1.0 h1:DjnLhNJu9WHwTrmoiQFvgmyJoczhdnm7LB23UBI2Amo=
 github.com/oschwald/geoip2-golang/v2 v2.1.0/go.mod h1:qdVmcPgrTJ4q2eP9tHq/yldMTdp2VMr33uVdFbHBiBc=
 github.com/oschwald/maxminddb-golang/v2 v2.1.1 h1:lA8FH0oOrM4u7mLvowq8IT6a3Q/qEnqRzLQn9eH5ojc=

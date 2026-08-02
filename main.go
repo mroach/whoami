@@ -20,11 +20,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
 type requestData struct {
 	IP          string            `json:"ip"`
+	IPStack     string            `json:"ipStack"`
 	Headers     map[string]string `json:"headers"`
 	ISP         string            `json:"isp"`
 	ASN         uint              `json:"asn"`
@@ -34,9 +36,21 @@ type requestData struct {
 	ServerTime  string            `json:"server_time"`
 }
 
+type dualStackConfig struct {
+	IPv4Host string `json:"IPv4"`
+	IPv6Host string `json:"IPv6"`
+	TryStack string `json:"tryStack"`
+}
+
+type jsonpResponse struct {
+	Meta any `json:"meta"`
+	Data any `json:"data"`
+}
+
 type pageData struct {
-	Title   string
-	Request *requestData
+	Title     string
+	Request   *requestData
+	DualStack *dualStackConfig
 }
 
 var funcMap = template.FuncMap{
@@ -65,8 +79,14 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Heartbeat("/healthz"))
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET"},
+		AllowCredentials: false,
+	}))
 
 	r.Get("/json", jsonHandler)
+	r.Get("/jsonp", jsonpHandler)
 	r.Get("/text", textHandler)
 	r.Get("/ip", ipHandler)
 	r.Get("/images/asn/{asn}.png", getAsnImage)
@@ -108,11 +128,33 @@ func contentNegotiate(handlers map[string]http.HandlerFunc, fallback string) htt
 	}
 }
 
+func buildDualStack(r *http.Request) *dualStackConfig {
+	addr := remoteAddr(r)
+
+	var tryStack string
+
+	if addr.Is4() {
+		tryStack = "IPv6"
+	} else {
+		tryStack = "IPv4"
+	}
+
+	dualStackConfig := &dualStackConfig{
+		IPv4Host: os.Getenv("IPV4_HOST"),
+		IPv6Host: os.Getenv("IPV6_HOST"),
+		TryStack: tryStack,
+	}
+
+	return dualStackConfig
+}
+
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	rd := buildRequestdata(r)
+
 	page := &pageData{
-		Title:   rd.IP,
-		Request: rd,
+		Title:     rd.IP,
+		Request:   rd,
+		DualStack: buildDualStack(r),
 	}
 
 	w.Header().Add("content-type", "text/html")
@@ -131,6 +173,28 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(rd)
+}
+
+func jsonpHandler(w http.ResponseWriter, r *http.Request) {
+	data := buildRequestdata(r)
+
+	callback := r.URL.Query().Get("callback")
+	if callback == "" {
+		http.Error(w, "missing jsonp callback name", http.StatusBadRequest)
+		return
+	}
+
+	resp := &jsonpResponse{
+		Data: data,
+	}
+
+	w.Header().Add("content-type", "text/javascript")
+	w.Write([]byte(callback + "("))
+
+	enc := json.NewEncoder(w)
+	enc.Encode(resp)
+
+	w.Write([]byte(")"))
 }
 
 func textHandler(w http.ResponseWriter, r *http.Request) {
@@ -213,9 +277,16 @@ func getAsnImage(w http.ResponseWriter, r *http.Request) {
 
 func buildRequestdata(r *http.Request) *requestData {
 	addr := remoteAddr(r)
+	ipStack := ""
+	if addr.Is4() {
+		ipStack = "IPv4"
+	} else {
+		ipStack = "IPv6"
+	}
 
 	rd := &requestData{
 		IP:         addr.String(),
+		IPStack:    ipStack,
 		ServerTime: time.Now().UTC().Format(time.DateTime) + " UTC",
 	}
 
