@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/mroach/whoami/internal/version"
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
@@ -60,7 +61,7 @@ var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 }
 
-var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles("pages/index.html"))
+var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles("templates/index.html"))
 var mmCity *geoip2.Reader
 var mmASN *geoip2.Reader
 
@@ -71,6 +72,8 @@ func main() {
 	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: getLogLevel()})
 	logger := slog.New(logHandler)
 	slog.SetDefault(logger)
+
+	slog.Info("Starting", "ver", version.ToString())
 
 	mmCity, err = geoip2.Open("data/maxmind/GeoLite2-City.mmdb")
 	if err != nil {
@@ -244,6 +247,7 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.Server.Time)
 	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
+	fmt.Fprintf(w, "%-20s %s\n", "App Version", version.ToString())
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "HTTP Headers\n")
 	for k, v := range rd.Headers {
@@ -320,7 +324,7 @@ func buildRequestdata(r *http.Request) *requestData {
 		Server: &serverData{
 			Time:       time.Now().UTC().Format(time.DateTime) + " UTC",
 			GoVersion:  fmt.Sprintf("%s %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
-			AppVersion: os.Getenv("APP_VERSION"),
+			AppVersion: version.ToString(),
 		},
 	}
 
