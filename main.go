@@ -370,10 +370,17 @@ func remoteAddr(r *http.Request) netip.Addr {
 
 	slog.Debug("Remote address detected as", "raddr", raddr)
 
-	// there may be a client port e.g. `10.8.0.1:23422` or `[::1]:34029`. Drop the port.
-	if m, _ := regexp.MatchString(":[0-9]+$", raddr); m {
+	// there may be a client port e.g. `10.8.0.1:23422`
+	if isMatch, _ := regexp.MatchString("^(\\d+\\.){3}\\d+:[0-9]+$", raddr); isMatch {
 		host, _, _ := net.SplitHostPort(raddr)
-		slog.Debug("Found a port in the address", "old", raddr, "new", host)
+		slog.Debug("Found a port in the IPv4 address", "old", raddr, "new", host)
+		raddr = host
+	}
+
+	// or, could be an IPv6 address with a port
+	if isMatch, _ := regexp.MatchString("^\\[[^\\]]+\\]:[0-9]+$", raddr); isMatch {
+		host, _, _ := net.SplitHostPort(raddr)
+		slog.Debug("Found a port in the IPv6 address", "old", raddr, "new", host)
 		raddr = host
 	}
 
