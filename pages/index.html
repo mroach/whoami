@@ -137,7 +137,7 @@
       // Keep the JS compatible with the IE6, FF12-era of browsers
 
       function setInnerText(el, text) {
-        if ("textContent" in el) {
+        if (typeof el.textContent != "undefined") {
           el.textContent = text;
         } else {
           el.innerText = text; // IE6-8
@@ -173,7 +173,7 @@
         var elIsp = document.getElementById("dual-stack-isp").getElementsByTagName("td")[0];
         var elIspText = document.createElement("span");
         setInnerText(elIspText, data.isp + " (AS" + data.asn + ")");
-        elIsp.appendChild(elIspText)
+        elIsp.appendChild(elIspText);
 
         var elLogo = document.createElement("img");
         elLogo.src = "images/asn/" + data.asn + ".png";
@@ -246,7 +246,7 @@
         // IE6 doesn't support XHR to other domains, nor does it support `JSON.parse`.
         // XHR is a better user experience since we can detect failures, so prefer that.
         // For old browsers, try with JSONP
-        if ("XMLHttpRequest" in window && "JSON" in window && "parse" in JSON) {
+        if (typeof window.XMLHttpRequest != "undefined" && typeof JSON.parse != "undefined") {
           tryOtherStackXHR(tryHost);
         } else {
           tryOtherStackJSONP(tryHost);
