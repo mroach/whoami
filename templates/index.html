@@ -307,6 +307,13 @@
             <th>Go Version</th>
             <td>{{.Request.Server.GoVersion}}</td>
           </tr>
+          <tr>
+            <th>MaxMind (GeoIP)</th>
+            <td>
+              <div>City: {{.Request.Server.MaxMindCity}}</div>
+              <div>ASN: {{.Request.Server.MaxMindASN}}</div>
+            </td>
+          </tr>
         </table>
       </div>
     </div>

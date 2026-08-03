@@ -28,9 +28,11 @@ import (
 )
 
 type serverData struct {
-	Time       string `json:"time"`
-	GoVersion  string `json:"go_version"`
-	AppVersion string `json:"app_version"`
+	Time        string `json:"time"`
+	GoVersion   string `json:"go_version"`
+	AppVersion  string `json:"app_version"`
+	MaxMindCity string `json:"maxmind_city"`
+	MaxMindASN  string `json:"maxmind_asn"`
 }
 
 type requestData struct {
@@ -79,10 +81,16 @@ func main() {
 	if err != nil {
 		slog.Warn("MaxMind City DB Load", "err", err)
 	}
+	if mmCity != nil {
+		slog.Info("Loaded MaxMind City database", "built", mmCity.Metadata().BuildTime().Format(time.DateTime))
+	}
 
 	mmASN, err = geoip2.Open("data/maxmind/GeoLite2-ASN.mmdb")
 	if err != nil {
 		slog.Warn("MaxMind ASN DB Load", "err", err)
+	}
+	if mmASN != nil {
+		slog.Info("Loaded MaxMind ASN database", "built", mmASN.Metadata().BuildTime().Format(time.DateTime))
 	}
 
 	r := chi.NewRouter()
@@ -247,6 +255,8 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.Server.Time)
 	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
 	fmt.Fprintf(w, "%-20s %s\n", "App Version", version.ToString())
+	fmt.Fprintf(w, "%-20s %s\n", "MaxMind City", rd.Server.MaxMindCity)
+	fmt.Fprintf(w, "%-20s %s\n", "MaxMind ASN", rd.Server.MaxMindASN)
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "HTTP Headers\n")
 	for k, v := range rd.Headers {
@@ -321,10 +331,20 @@ func buildRequestdata(r *http.Request) *requestData {
 		IP:      addr.String(),
 		IPStack: ipStack,
 		Server: &serverData{
-			Time:       time.Now().UTC().Format(time.DateTime) + " UTC",
-			GoVersion:  fmt.Sprintf("%s %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
-			AppVersion: version.ToString(),
+			Time:        time.Now().UTC().Format(time.DateTime) + " UTC",
+			GoVersion:   fmt.Sprintf("%s %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
+			AppVersion:  version.ToString(),
+			MaxMindCity: "N/A",
+			MaxMindASN:  "N/A",
 		},
+	}
+
+	if mmCity != nil {
+		rd.Server.MaxMindCity = mmCity.Metadata().BuildTime().Format(time.DateTime)
+	}
+
+	if mmASN != nil {
+		rd.Server.MaxMindASN = mmASN.Metadata().BuildTime().Format(time.DateTime)
 	}
 
 	// don't show headers that were set by a reverse proxy
