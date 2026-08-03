@@ -244,7 +244,6 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", strings.Repeat("-", strings.Count(rd.IP, "")-1))
 	fmt.Fprintf(w, "%s\n", rd.IP)
 	fmt.Fprintf(w, "%s\n\n", strings.Repeat("-", strings.Count(rd.IP, "")-1))
-	fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
 
 	if rd.CountryCode != "" {
 		fmt.Fprintf(w, "%-20s %s, %s\n", "Location", rd.City, rd.CountryName)
@@ -367,9 +366,15 @@ func buildRequestdata(r *http.Request) *requestData {
 	// Lookup the location based on the IP address
 	location, err := locateIP(addr)
 	if err == nil {
-		rd.City = location.City.Names.English
 		rd.CountryCode = location.Country.ISOCode
 		rd.CountryName = location.Country.Names.English
+
+		// Avoid results like "Singapore, Singapore" or "Hong Kong, Hong Kong".
+		// Typically also affects Macau, Andorra, Luxembourg, Monaco
+		if city := location.City.Names.English; city != rd.CountryName {
+			rd.City = city
+		}
+
 		slog.Info("City lookup OK", "ip", addr, "city", rd.City, "country", rd.CountryCode)
 	} else {
 		slog.Error("City lookup", "ip", addr, "err", err)
