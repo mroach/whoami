@@ -75,9 +75,32 @@ Tested Browsers
 ---------------
 
 The HTML and JavaScript aim to be compatible with old browsers, especially those
-that could support dual-stack IP. Tested on:
+that could support dual-stack IP.
 
-* Internet Explorer 5, 6 (Windows 2000, XP)
-* Safari 3.0 (Mac OS X 10.4)
-* Firefox 12.0 (Windows 2000)
+### Internet Explorer
+
+On [Windows 2000 with IPv6 enabled](https://mroach.com/2026/03/ipv6-on-windows-nt-4-and-2000/),
+Internet Explorer 6 will still not work with IPv6. IE6 will work with IPv6 on Windows XP though.
+
+Internet Explorer 6 has strict cross-domain constraints, so it uses JSONP instead of XHR for dual-stack detection.
+
+Internet Explorer 5 renders fine, with no IPv6 support.
+
+### Safari
+
+Safari 3.0, the version that ships with Mac OS X 10.4 Tiger, supports IPv6 out of
+the box, so dual-stack detection works. Safari 3 does not support `JSON`, so it will
+fall-back to using the JSONP method.
+
+Safari 4.0 ships with `JSON` support, so it can use XHR for dual-stack detection.
+
+### Firefox
+
+Firefox 12.0 is the newest version that runs on Windows 2000. It works out of the box
+with IPv6 and XHR for dual-stack IP detection.
+
+Firefox 52.9 ESR is the newest version that runs on Windows XP. It also works fine.
+
+### Other working
+
 * PlayStation 5
