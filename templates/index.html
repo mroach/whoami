@@ -273,6 +273,11 @@
       }
 
       window.onload = function() {
+        // if a browser is so old that it doesn't have this function, we're done. (Found on Netscape 4.8)
+        if (typeof document.getElementById == "undefined") {
+          return
+        }
+
         tryOtherStack();
       }
     </script>
