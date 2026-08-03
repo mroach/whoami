@@ -141,10 +141,9 @@ func listenPort() int {
 
 func contentNegotiate(handlers map[string]http.HandlerFunc, fallback string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept := r.Header.Get("accept")
-
-		for contentType, handler := range handlers {
-			if strings.Contains(accept, contentType) {
+		for v := range strings.SplitSeq(r.Header.Get("accept"), ",") {
+			accept := strings.TrimSpace(strings.Split(v, ";")[0])
+			if handler := handlers[accept]; handler != nil {
 				handler(w, r)
 				return
 			}
