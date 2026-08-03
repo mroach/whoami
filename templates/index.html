@@ -2,7 +2,7 @@
 <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
   <tr>
     <th>{{.IPStack}} Address</th>
-    <td>{{.IP}}</td>
+    <td><code>{{.IP}}</code></td>
   </tr>
 
   <tr>
@@ -28,6 +28,20 @@
       {{end}}
     </td>
   </tr>
+
+  {{if .MACAddress}}
+  <tr>
+    <th title="Your IPv6 address is generated with EUI-64 which exposes your interface's MAC address">MAC Address</th>
+    <td><code>{{.MACAddress}}</code></td>
+  </tr>
+  {{end}}
+
+  {{if .MACVendor}}
+  <tr>
+    <th>NIC Vendor</th>
+    <td>{{.MACVendor}}</td>
+  </tr>
+  {{end}}
 </table>
 {{end}}
 

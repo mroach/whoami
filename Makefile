@@ -23,3 +23,8 @@ bin/whoami:
 	CGO_ENABLED=0 GOOS=linux \
 		go build -o $@ \
 	  	-ldflags="-X $(GOPKG)/internal/version.CommitHash=$(GIT_SHA) -X $(GOPKG)/internal/version.commitTimestamp=$(GIT_TS)"
+
+internal/ouidb/oui.csv:
+	mkdir -p $(@D)
+	curl --location --fail http://standards-oui.ieee.org/oui/oui.csv \
+		| csvtool namedcol "Assignment,Organization Name" - > $@

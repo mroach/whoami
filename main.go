@@ -23,6 +23,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/mroach/whoami/internal/eui64"
+	"github.com/mroach/whoami/internal/ouidb"
 	"github.com/mroach/whoami/internal/version"
 	"github.com/oschwald/geoip2-golang/v2"
 )
@@ -38,6 +40,8 @@ type serverData struct {
 type requestData struct {
 	IP          string            `json:"ip"`
 	IPStack     string            `json:"ipStack"`
+	MACAddress  string            `json:"macAddress"`
+	MACVendor   string            `json:"macVendor"`
 	Headers     map[string]string `json:"headers"`
 	ISP         string            `json:"isp"`
 	ASN         uint              `json:"asn"`
@@ -336,6 +340,18 @@ func buildRequestdata(r *http.Request) *requestData {
 			MaxMindCity: "N/A",
 			MaxMindASN:  "N/A",
 		},
+	}
+
+	if addr.Is6() {
+		if mac, ok := eui64.DetectEUI64(addr); ok {
+			rd.MACAddress = mac.String()
+			slog.Info("Detected an EUI-64 address", "mac", rd.MACAddress)
+
+			if vendor, ok := ouidb.Lookup(mac); ok {
+				rd.MACVendor = vendor
+				slog.Info("Detected MAC vendor", "mac", rd.MACAddress, "vendor", rd.MACVendor)
+			}
+		}
 	}
 
 	if mmCity != nil {
