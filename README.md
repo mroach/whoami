@@ -70,3 +70,14 @@ services:
     ports:
       - 8080:8080
 ```
+
+Tested Browsers
+---------------
+
+The HTML and JavaScript aim to be compatible with old browsers, especially those
+that could support dual-stack IP. Tested on:
+
+* Internet Explorer 5, 6 (Windows 2000, XP)
+* Safari 3.0 (Mac OS X 10.4)
+* Firefox 12.0 (Windows 2000)
+* PlayStation 5
