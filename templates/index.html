@@ -250,7 +250,7 @@
         // IE6 doesn't support XHR to other domains, nor does it support `JSON.parse`.
         // XHR is a better user experience since we can detect failures, so prefer that.
         // For old browsers, try with JSONP
-        if (typeof window.XMLHttpRequest != "undefined" && typeof JSON.parse != "undefined") {
+        if (typeof window.XMLHttpRequest != "undefined" && typeof JSON != "undefined") {
           tryOtherStackXHR(tryHost);
         } else {
           tryOtherStackJSONP(tryHost);
