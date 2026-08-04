@@ -13,13 +13,19 @@ import (
 //go:embed oui.csv
 var ouiCSV string
 
+// Organizationally-Unique Identifier
+// IEEE-assigned 24-bit number to uniquely identify hardware vendors.
+// Typically rendered in 3 hex octets e.g. 08:00:2B, we store them internally
+// as integers for fast lookup 08:00:2B => 524331
+type OUI = uint32
+
 var (
 	once sync.Once
-	db   map[uint32]string // oui to vendor name e.g. `258 => "3COM"`
+	db   map[OUI]string // oui to vendor name e.g. `258 => "3COM"`
 )
 
 // Given a MAC address, try to look-up the vendor based on the
-// OUI (Organizationally-unique Identifier), the first 3 bytes of the address.
+// OUI (Organizationally-unique Identifier): the first 3 bytes of the address.
 func Lookup(mac net.HardwareAddr) (vendor string, ok bool) {
 	once.Do(load)
 	oui := ouiFromMAC(mac)
@@ -27,8 +33,8 @@ func Lookup(mac net.HardwareAddr) (vendor string, ok bool) {
 	return
 }
 
-func ouiFromMAC(mac net.HardwareAddr) (oui uint32) {
-	return uint32(mac[0])<<16 | uint32(mac[1])<<8 | uint32(mac[2])
+func ouiFromMAC(mac net.HardwareAddr) (oui OUI) {
+	return OUI(mac[0])<<16 | OUI(mac[1])<<8 | OUI(mac[2])
 }
 
 func load() {
@@ -39,7 +45,7 @@ func load() {
 		panic(err)
 	}
 
-	db = make(map[uint32]string, 40000)
+	db = make(map[OUI]string, 40000)
 
 	for {
 		rec, err := r.Read()
@@ -58,7 +64,7 @@ func load() {
 	}
 }
 
-func parseOUI(s string) (oui uint32, ok bool) {
+func parseOUI(s string) (oui OUI, ok bool) {
 	s = strings.ReplaceAll(s, ":", "")
 	s = strings.ReplaceAll(s, "-", "")
 	if len(s) != 6 {
@@ -68,5 +74,5 @@ func parseOUI(s string) (oui uint32, ok bool) {
 	if err != nil {
 		return 0, false
 	}
-	return uint32(n), true
+	return OUI(n), true
 }

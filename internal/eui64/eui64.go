@@ -5,9 +5,15 @@ import (
 	"net/netip"
 )
 
-// Checks if the given IPv6 address was generated using the EUI-64 scheme which turns
-// the interface's MAC address into an interface ID with two small modifications.
-// If this is an EUI-64 address, returns the original MAC address
+// EUI-64 (Extended Unique Identifier) is a method of generating the 64-bit interface ID
+// portion of an IPv6 from the network interface's 48-bit MAC address.
+// This method is deprecated and no longer used by most IPv6 stacks.
+//
+// It works by shoving 0xFFFE between the two 24-bit halves and flipping the 7th
+// bit of the first byte.
+
+// Checks if an IPv6 address was generated using EUI-64 and if so, returning
+// the orignal interface MAC address.
 func DetectEUI64(ip netip.Addr) (mac net.HardwareAddr, ok bool) {
 	if !ip.Is6() {
 		return nil, false
@@ -27,7 +33,7 @@ func DetectEUI64(ip netip.Addr) (mac net.HardwareAddr, ok bool) {
 	copy(mac[0:3], interfaceId[0:3])
 	copy(mac[3:6], interfaceId[5:8])
 
-	// Undo the local bit flip that was applied when the MAC was converted to an interface ID
+	// Flip the 7th bit of the first byte. This is known as the "local bit"
 	mac[0] ^= 0x02
 
 	return mac, true
