@@ -1,5 +1,5 @@
 {{define "ipInfo"}}
-<table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
+<table cellspacing="0" rules="rows">
   <tr>
     <th>{{.IPStack}} Address</th>
     <td><code>{{.IP}}</code></td>
@@ -10,7 +10,7 @@
     <td>
       {{if .CountryCode}}
         <span>{{if .City}}{{.City}}, {{end}}{{.CountryName}}</span>
-        <img src="images/flags/{{.CountryCode | ToLower}}.png" alt="{{.CountryName}}" class="flag" />
+        <img src="images/flags/{{.CountryCode | ToLower}}.png" alt="{{.CountryName}}" class="flag">
       {{else}}
         <i>Unknown</i>
       {{end}}
@@ -22,7 +22,7 @@
     <td>
       {{if .ISP}}
         <span>{{.ISP}} (AS{{.ASN}})</span>
-        <img src="images/asn/{{.ASN}}.png" alt="" class="asnlogo" />
+        <img src="images/asn/{{.ASN}}.png" alt="" class="asnlogo">
       {{else}}
         <i>Unknown</i>
       {{end}}
@@ -45,13 +45,13 @@
 </table>
 {{end}}
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="favicon.ico" />
-    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="icon" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
     <title>{{.Title}}</title>
     <style type="text/css">
       *, *::before, *::after {
@@ -92,7 +92,7 @@
       }
       h1 {
         margin: 10px 0 40px;
-        padding: 0.3rem 0.8rem;
+        padding: 0.3em 0.8em;
 
         background-color: #FFF7E9;
         border-bottom: solid #b24d7a 3px;
@@ -101,16 +101,18 @@
         text-align: center;
 
         font-family: monospace;
-        font-size: 2rem;
-        letter-spacing: 0.1rem;
+        font-size: 2em;
+        letter-spacing: 0.1em;
       }
       table {
         border-collapse: collapse;
+        background-color: #FFF7E9;
+        border: 1px solid #B24D7A;
       }
       table td, table th {
         background-color: #FFF7E9;
         border: solid #b24d7a 1px;
-        padding: 0.3rem 0.8rem;
+        padding: 0.3em 0.8em;
       }
       table th {
         text-align: left;
@@ -154,12 +156,14 @@
         h1 {
           font-size: 4.5vw;
           font-weight: lighter;
-          letter-spacing: -0.1rem;
-          padding: 0.3rem 0;
-          margin-bottom: 1.5rem;
+          letter-spacing: -0.1em;
+          padding: 0.3em 0;
+          margin-bottom: 1.5em;
         }
 
-        table { min-width: 90% }
+        table {
+          min-width: 90%;
+        }
 
         table td,
         table th,
@@ -302,7 +306,7 @@
 
       <div class="section">
         <h2>HTTP Headers</h2>
-        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
+        <table cellspacing="0" rules="rows">
           {{- range $name, $value := .Request.Headers }}
             <tr>
               <th>{{$name}}</th>
@@ -314,7 +318,7 @@
 
       <div class="section">
         <h2>Server</h2>
-        <table bgcolor="#FFF7E9" bordercolor="#B24D7A" cellspacing="0" cellpadding="4" rules="rows" border="2">
+        <table cellspacing="0" rules="rows">
           <tr>
             <th>Time</th>
             <td>{{.Request.Server.Time}}</td>
@@ -335,6 +339,14 @@
             </td>
           </tr>
         </table>
+      </div>
+
+      <hr>
+
+      <div style="margin-top: 1em">
+        <div>
+          <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01"></a>
+        </div>
       </div>
     </div>
   </body>
