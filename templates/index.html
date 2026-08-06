@@ -321,7 +321,7 @@
         <table cellspacing="0" rules="rows">
           {{- range $name, $value := .Request.Headers }}
             <tr>
-              <th>{{$name}}</th>
+              <th style="text-wrap: nowrap; vertical-align: top">{{$name}}</th>
               <td>{{$value}}</td>
             </tr>
           {{- end }}
