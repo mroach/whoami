@@ -281,17 +281,29 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w, "%-20s %s\n", "Scheme", "HTTP")
 	}
-
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.Server.Time)
-	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
+
+	fmt.Fprintf(w, "Server\n")
+	fmt.Fprintf(w, "------\n")
+	fmt.Fprintf(w, "%-20s %s\n", "Time", rd.Server.Time)
 	fmt.Fprintf(w, "%-20s %s\n", "App Version", version.ToString())
+	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
 	fmt.Fprintf(w, "%-20s %s\n", "MaxMind City", rd.Server.MaxMindCity)
 	fmt.Fprintf(w, "%-20s %s\n", "MaxMind ASN", rd.Server.MaxMindASN)
 	fmt.Fprintf(w, "\n")
+
 	fmt.Fprintf(w, "HTTP Headers\n")
+	fmt.Fprintf(w, "------------\n")
+
+	colWidth := 20
+	for k := range rd.Headers {
+		if newLen := len(k); newLen > colWidth {
+			colWidth = newLen
+		}
+	}
+
 	for k, v := range rd.Headers {
-		fmt.Fprintf(w, "  %-40s %s\n", k, v)
+		fmt.Fprintf(w, "%-*s %s\n", colWidth, k, v)
 	}
 }
 
