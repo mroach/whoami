@@ -268,6 +268,14 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%-20s %s (AS%v)\n", "ISP", rd.ISP, rd.ASN)
 	}
 
+	if rd.MACAddress != "" {
+		fmt.Fprintf(w, "%-20s %s\n", "MAC Address", rd.MACAddress)
+	}
+
+	if rd.MACVendor != "" {
+		fmt.Fprintf(w, "%-20s %s\n", "NIC Vendor", rd.MACVendor)
+	}
+
 	if rd.TLS != nil {
 		fmt.Fprintf(w, "%-20s HTTPS (TLS %s / %s)\n", "Scheme", rd.TLS.Version, rd.TLS.Cipher)
 	} else {
