@@ -267,12 +267,20 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	if rd.ISP != "" {
 		fmt.Fprintf(w, "%-20s %s (AS%v)\n", "ISP", rd.ISP, rd.ASN)
 	}
+
+	if rd.TLS != nil {
+		fmt.Fprintf(w, "%-20s HTTPS (TLS %s / %s)\n", "Scheme", rd.TLS.Version, rd.TLS.Cipher)
+	} else {
+		fmt.Fprintf(w, "%-20s %s\n", "Scheme", "HTTP")
+	}
+
+	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "%-20s %s\n", "Server Time", rd.Server.Time)
 	fmt.Fprintf(w, "%-20s %s\n", "Go Version", rd.Server.GoVersion)
 	fmt.Fprintf(w, "%-20s %s\n", "App Version", version.ToString())
 	fmt.Fprintf(w, "%-20s %s\n", "MaxMind City", rd.Server.MaxMindCity)
 	fmt.Fprintf(w, "%-20s %s\n", "MaxMind ASN", rd.Server.MaxMindASN)
-	fmt.Fprintln(w)
+	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "HTTP Headers\n")
 	for k, v := range rd.Headers {
 		fmt.Fprintf(w, "  %-40s %s\n", k, v)
@@ -366,11 +374,17 @@ func buildRequestdata(r *http.Request) *requestData {
 		}
 	}
 
+	// Reverse proxies can set the `x-internal-tls` header to pass-along TLS information.
+	// This should be a URL query e.g. `scheme=https;version=tls1.3;cipher=TLS_AES_128_GCM_SHA256`
 	if tls, err := url.ParseQuery(r.Header.Get("x-internal-tls")); err == nil {
-		re := regexp.MustCompile(`\d\.\d`)
-		rd.TLS = &tlsData{
-			Version: re.FindString(tls.Get("version")),
-			Cipher:  tls.Get("cipher"),
+		if tls.Get("scheme") == "https" {
+			rd.TLS = &tlsData{
+				Cipher: tls.Get("cipher"),
+			}
+
+			if ver := regexp.MustCompile(`\d\.\d`).FindString(tls.Get("version")); ver != "" {
+				rd.TLS.Version = ver
+			}
 		}
 	}
 

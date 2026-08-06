@@ -59,13 +59,13 @@ version and cipher.
 In `Caddyconf`:
 
 ```
-header_up x-internal-tls "cipher={tls_cipher}&version={tls_version}"
+header_up x-internal-tls "scheme={scheme}&cipher={tls_cipher}&version={tls_version}"
 ```
 
 For nginx:
 
 ```
-proxy_set_header x-internal-tls "cipher=$ssl_cipher;version=$ssl_protocol"
+proxy_set_header x-internal-tls "scheme=$scheme&cipher=$ssl_cipher&version=$ssl_protocol"
 ```
 
 Running

@@ -46,7 +46,7 @@
   <tr>
     <th>Scheme</th>
     <td>
-      {{if .TLS.Version}}
+      {{if .TLS}}
         HTTPS (TLS {{.TLS.Version}} / {{.TLS.Cipher}})
       {{else}}
         HTTP
