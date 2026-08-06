@@ -43,9 +43,13 @@ ip.example.com    IN AAAA    2001:db8::80
 
 #### Real IP
 
-This app can be run behind a reverse proxy. It will look for incoming headers
-`x-forwarded-for` or `x-real-ip` and if one is present, it will use those IPs
-instead of the client's remote address.
+This app can run behind a reverse proxy, but it needs to know the IPs or CIDRs.
+Configure these with the `TRUSTED_PROXIES` environment variable with IPs or
+ranges separated by a comma.
+
+```
+TRUSTED_PROXIES=192.18.8.0/27,fd00:b100:d0::/64
+```
 
 #### TLS
 
@@ -86,6 +90,7 @@ services:
     environment:
       IPV4_HOST: ip4.example.com
       IPV6_HOST: ip6.example.com
+      TRUSTED_PROXIES: 192.18.8.0/27;fd00:b100:d0::/64
     ports:
       - 8080:8080
 ```

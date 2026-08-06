@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -104,9 +103,15 @@ func main() {
 		slog.Info("Loaded MaxMind ASN database", "built", mmASN.Metadata().BuildTime().Format(time.DateTime))
 	}
 
+	var trustedProxies []string
+	if str, ok := os.LookupEnv("TRUSTED_PROXIES"); ok {
+		trustedProxies = regexp.MustCompile(`[;,\s]+`).Split(str, -1)
+		slog.Info("Trusted proxies configured", "networks", trustedProxies)
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	r.Use(middleware.ClientIPFromXFF(trustedProxies...))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Heartbeat("/healthz"))
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -426,29 +431,29 @@ func buildRequestdata(r *http.Request) *requestData {
 }
 
 func remoteAddr(r *http.Request) netip.Addr {
-	raddr := r.RemoteAddr
+	// If the IP was set in x-forwarded-for, `GetClientIP` is where we get it
+	raddr := middleware.GetClientIP(r.Context())
+
+	// If no XFF was set, then we'll use the normal remote address
+	if raddr == "" {
+		raddr = r.RemoteAddr
+	}
 
 	slog.Debug("Remote address detected as", "raddr", raddr)
 
-	// there may be a client port e.g. `10.8.0.1:23422`
-	if isMatch, _ := regexp.MatchString("^(\\d+\\.){3}\\d+:[0-9]+$", raddr); isMatch {
-		host, _, _ := net.SplitHostPort(raddr)
-		slog.Debug("Found a port in the IPv4 address", "old", raddr, "new", host)
-		raddr = host
+	if addr, err := netip.ParseAddr(raddr); err == nil {
+		slog.Debug("Got the IP")
+		return addr
 	}
 
-	// or, could be an IPv6 address with a port
-	if isMatch, _ := regexp.MatchString("^\\[[^\\]]+\\]:[0-9]+$", raddr); isMatch {
-		host, _, _ := net.SplitHostPort(raddr)
-		slog.Debug("Found a port in the IPv6 address", "old", raddr, "new", host)
-		raddr = host
+	if addr, err := netip.ParseAddrPort(raddr); err == nil {
+		slog.Debug("Got the IP, with a port")
+		return addr.Addr()
 	}
 
-	addr, err := netip.ParseAddr(raddr)
-	if err != nil {
-		slog.Error("Failed to parse the host", "raddr", raddr, "err", err)
-	}
-	return addr
+	slog.Warn("No valid IP address from", "raddr", raddr)
+
+	return netip.MustParseAddr("0.0.0.0")
 }
 
 func locateIP(addr netip.Addr) (*geoip2.City, error) {
