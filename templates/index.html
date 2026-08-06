@@ -42,6 +42,18 @@
     <td>{{.MACVendor}}</td>
   </tr>
   {{end}}
+
+  <tr>
+    <th>Scheme</th>
+    <td>
+      {{if .TLS.Version}}
+        HTTPS (TLS {{.TLS.Version}} / {{.TLS.Cipher}})
+      {{else}}
+        HTTP
+      {{end}}
+    </td>
+  </tr>
+
 </table>
 {{end}}
 

@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -37,6 +38,11 @@ type serverData struct {
 	MaxMindASN  string `json:"maxmind_asn"`
 }
 
+type tlsData struct {
+	Version string `json:"version"`
+	Cipher  string `json:"cipher"`
+}
+
 type requestData struct {
 	IP          string            `json:"ip"`
 	IPStack     string            `json:"ipStack"`
@@ -49,6 +55,7 @@ type requestData struct {
 	CountryCode string            `json:"country_code"`
 	CountryName string            `json:"country_name"`
 	Server      *serverData       `json:"server"`
+	TLS         *tlsData          `json:"tls"`
 }
 
 type dualStackConfig struct {
@@ -354,6 +361,14 @@ func buildRequestdata(r *http.Request) *requestData {
 		}
 	}
 
+	if tls, err := url.ParseQuery(r.Header.Get("x-internal-tls")); err == nil {
+		re := regexp.MustCompile(`\d\.\d`)
+		rd.TLS = &tlsData{
+			Version: re.FindString(tls.Get("version")),
+			Cipher:  tls.Get("cipher"),
+		}
+	}
+
 	if mmCity != nil {
 		rd.Server.MaxMindCity = mmCity.Metadata().BuildTime().Format(time.DateTime)
 	}
@@ -369,6 +384,7 @@ func buildRequestdata(r *http.Request) *requestData {
 		"x-forwarded-for",
 		"x-forwarded-proto",
 		"x-forwarded-host",
+		"x-internal-tls",
 	}
 	headers := make(map[string]string)
 	for k, v := range r.Header {

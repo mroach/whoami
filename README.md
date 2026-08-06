@@ -41,9 +41,28 @@ ip.example.com    IN AAAA    2001:db8::80
 
 ### Reverse proxy
 
+#### Real IP
+
 This app can be run behind a reverse proxy. It will look for incoming headers
 `x-forwarded-for` or `x-real-ip` and if one is present, it will use those IPs
 instead of the client's remote address.
+
+#### TLS
+
+If you want to display TLS information, add a header `x-internal-tls` with the
+version and cipher.
+
+In `Caddyconf`:
+
+```
+header_up x-internal-tls "cipher={tls_cipher}&version={tls_version}"
+```
+
+For nginx:
+
+```
+proxy_set_header x-internal-tls "cipher=$ssl_cipher;version=$ssl_protocol"
+```
 
 Running
 -------
