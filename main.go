@@ -42,19 +42,26 @@ type tlsData struct {
 	Cipher  string `json:"cipher"`
 }
 
+type httpInfo struct {
+	Scheme  string            `json:"scheme"`
+	Proto   string            `json:"proto"`
+	Host    string            `json:"host"`
+	Headers map[string]string `json:"headers"`
+}
+
 type requestData struct {
-	IP          string            `json:"ip"`
-	IPStack     string            `json:"ipStack"`
-	MACAddress  string            `json:"macAddress"`
-	MACVendor   string            `json:"macVendor"`
-	Headers     map[string]string `json:"headers"`
-	ISP         string            `json:"isp"`
-	ASN         uint              `json:"asn"`
-	City        string            `json:"city"`
-	CountryCode string            `json:"country_code"`
-	CountryName string            `json:"country_name"`
-	Server      *serverData       `json:"server"`
-	TLS         *tlsData          `json:"tls"`
+	IP          string      `json:"ip"`
+	IPStack     string      `json:"ipStack"`
+	MACAddress  string      `json:"macAddress"`
+	MACVendor   string      `json:"macVendor"`
+	ISP         string      `json:"isp"`
+	ASN         uint        `json:"asn"`
+	City        string      `json:"city"`
+	CountryCode string      `json:"country_code"`
+	CountryName string      `json:"country_name"`
+	Server      *serverData `json:"server"`
+	TLS         *tlsData    `json:"tls"`
+	HTTP        *httpInfo   `json:"http"`
 }
 
 type dualStackConfig struct {
@@ -297,13 +304,13 @@ func textHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "------------\n")
 
 	colWidth := 20
-	for k := range rd.Headers {
+	for k := range rd.HTTP.Headers {
 		if newLen := len(k); newLen > colWidth {
 			colWidth = newLen
 		}
 	}
 
-	for k, v := range rd.Headers {
+	for k, v := range rd.HTTP.Headers {
 		fmt.Fprintf(w, "%-*s %s\n", colWidth, k, v)
 	}
 }
@@ -395,15 +402,48 @@ func buildRequestdata(r *http.Request) *requestData {
 		}
 	}
 
+	rd.HTTP = &httpInfo{
+		Host:   r.Host,
+		Scheme: "http",
+		Proto:  r.Proto,
+	}
+
+	// Behind a reverse proxy, this info should be overridden by a header.
+	if info, err := url.ParseQuery(r.Header.Get("x-internal-http")); err == nil && len(info) > 0 {
+		if scheme := info.Get("scheme"); scheme != "" {
+			rd.HTTP.Scheme = scheme
+		}
+
+		if proto := info.Get("proto"); proto != "" {
+			rd.HTTP.Proto = proto
+		}
+	}
+
 	// Reverse proxies can set the `x-internal-tls` header to pass-along TLS information.
-	// This should be a URL query e.g. `scheme=https;version=tls1.3;cipher=TLS_AES_128_GCM_SHA256`
-	if tls, err := url.ParseQuery(r.Header.Get("x-internal-tls")); err == nil {
-		if tls.Get("scheme") == "https" {
-			rd.TLS = &tlsData{
-				Cipher: tls.Get("cipher"),
+	// This should be a URL query e.g. `version=tls1.3;cipher=TLS_AES_128_GCM_SHA256`
+	if query, err := url.ParseQuery(r.Header.Get("x-internal-tls")); err == nil {
+		values := make(map[string]string)
+
+		for k := range query {
+			v := query.Get(k)
+
+			// Caddy will leave the bare variable and fencing when the values isn't available,
+			// so you can end up with a query like `cipher={http.request.tls.cipher_suite}`
+			if v == "" || v[0] == '{' {
+				continue
 			}
 
-			if ver := regexp.MustCompile(`\d\.\d`).FindString(tls.Get("version")); ver != "" {
+			values[k] = v
+		}
+
+		if len(values) > 0 {
+			rd.HTTP.Scheme = "https"
+
+			rd.TLS = &tlsData{
+				Cipher: values["cipher"],
+			}
+
+			if ver := regexp.MustCompile(`\d\.\d`).FindString(values["version"]); ver != "" {
 				rd.TLS.Version = ver
 			}
 		}
@@ -424,16 +464,19 @@ func buildRequestdata(r *http.Request) *requestData {
 		"x-forwarded-for",
 		"x-forwarded-proto",
 		"x-forwarded-host",
-		"x-internal-tls",
 	}
 	headers := make(map[string]string)
 	for k, v := range r.Header {
+		if strings.HasPrefix(strings.ToLower(k), "x-internal-") {
+			continue
+		}
+
 		found := slices.Contains(ignoreHeaders, strings.ToLower(k))
 		if !found {
 			headers[k] = strings.Join(v, "; ")
 		}
 	}
-	rd.Headers = headers
+	rd.HTTP.Headers = headers
 
 	// Lookup the location based on the IP address
 	location, err := locateIP(addr)

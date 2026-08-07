@@ -51,21 +51,22 @@ ranges separated by a comma.
 TRUSTED_PROXIES=192.18.8.0/27,fd00:b100:d0::/64
 ```
 
-#### TLS
+#### HTTP and TLS
 
-If you want to display TLS information, add a header `x-internal-tls` with the
-version and cipher.
+If you want to display original HTTP and TLS information add headers as follows:
 
 In `Caddyconf`:
 
 ```
-header_up x-internal-tls "scheme={scheme}&cipher={tls_cipher}&version={tls_version}"
+header_up x-internal-tls "cipher={tls_cipher}&version={tls_version}"
+header_up x-internal-http "scheme={scheme}&proto={http.request.proto}"
 ```
 
 For nginx:
 
 ```
-proxy_set_header x-internal-tls "scheme=$scheme&cipher=$ssl_cipher&version=$ssl_protocol"
+proxy_set_header x-internal-tls "cipher=$ssl_cipher&version=$ssl_protocol"
+proxy_set_header x-internal-http "scheme=$scheme&proto=$server_protocol"
 ```
 
 Running

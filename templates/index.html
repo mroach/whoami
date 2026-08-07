@@ -319,7 +319,7 @@
       <div class="section">
         <h2>HTTP Headers</h2>
         <table cellspacing="0" rules="rows">
-          {{- range $name, $value := .Request.Headers }}
+          {{- range $name, $value := .Request.HTTP.Headers }}
             <tr>
               <th style="text-wrap: nowrap; vertical-align: top">{{$name}}</th>
               <td>{{$value}}</td>
