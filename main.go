@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"image/gif"
+	"image/png"
 	"io"
 	"log"
 	"log/slog"
@@ -78,9 +80,13 @@ type pageData struct {
 
 var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
+	"ToUpper": strings.ToUpper,
 }
 
-var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles("templates/index.html"))
+var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles(
+	"templates/index.html3.html",
+	"templates/index.html4.html",
+))
 var mmCity *geoip2.Reader
 var mmASN *geoip2.Reader
 
@@ -133,12 +139,13 @@ func main() {
 	r.Get("/ip_info", ipInfoHandler)
 	r.Get("/text", textHandler)
 	r.Get("/ip", ipHandler)
-	r.Get("/images/asn/{asn}.png", getAsnImage)
+	r.Get("/images/asn/{asn}.{fmt}", getAsnImage)
 	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
 		"application/json": jsonHandler,
 		"text/html":        htmlHandler,
 		"text/plain":       textHandler,
 	}, "text/html"))
+	r.Get("/html{htmlVer}", htmlHandler)
 	fileServer := http.FileServer(http.Dir("./static"))
 	r.Handle("/*", fileServer)
 
@@ -207,10 +214,6 @@ func buildDualStack(r *http.Request) *dualStackConfig {
 }
 
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
-	renderHtml(w, r, "index.html")
-}
-
-func renderHtml(w http.ResponseWriter, r *http.Request, templateName string) {
 	rd := buildRequestdata(r)
 
 	page := &pageData{
@@ -220,6 +223,26 @@ func renderHtml(w http.ResponseWriter, r *http.Request, templateName string) {
 	}
 
 	w.Header().Add("content-type", "text/html")
+
+	templateName := "index.html4.html"
+
+	// It's largely correct to say any browser that uses HTTP/1.0 can only handle HTML 3.2
+	//   Netscape 2.0, IE 3.0, CyberDog 2.0, Lynx, Opera 2.0.
+	// There are a couple exceptions, and these browsers only support HTML 2.0:
+	//   Netscape 1.0, NCSA Mosaic 2.x
+	// The first browsers with HTTP/1.1 support, also supported HTML 4:
+	//   Netscape 4.0, IE 4.0, Opera 3.5
+	if strings.EqualFold(rd.HTTP.Proto, "HTTP/1.0") {
+		templateName = "index.html3.html"
+	}
+
+	// Callers can specify the version they want in the URL e.g. `/html3`
+	if ver := chi.URLParam(r, "htmlVer"); ver != "" {
+		versionedName := "index.html" + ver + ".html"
+		if t := templates.Lookup(versionedName); t != nil {
+			templateName = versionedName
+		}
+	}
 
 	err := templates.Funcs(funcMap).ExecuteTemplate(w, templateName, page)
 	if err != nil {
@@ -322,11 +345,66 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, addr.String())
 }
 
+func serveAsnImage(w http.ResponseWriter, r *http.Request, imagePath string, wantedFormat string) {
+	slog.Info("Serving ASN image", "source", imagePath, "fmt", wantedFormat)
+
+	dir, file := filepath.Split(imagePath)
+	wantedExt := "." + wantedFormat
+
+	if filepath.Ext(file) == wantedExt {
+		http.ServeFile(w, r, imagePath)
+		return
+	}
+
+	asn := strings.TrimSuffix(filepath.Base(imagePath), filepath.Ext(imagePath))
+	wantedPath := filepath.Join(dir, asn+wantedExt)
+
+	// if we already have a cached converted copy, use it
+	if _, err := os.Stat(wantedPath); err == nil {
+		http.ServeFile(w, r, wantedPath)
+		return
+	}
+
+	if wantedFormat == "gif" {
+		slog.Info("Converting to GIF", "path", imagePath)
+
+		src, err := os.Open(imagePath)
+		if err != nil {
+			slog.Warn("Failed open source image", "path", imagePath, "err", err)
+			goto not_found
+		}
+		defer src.Close()
+
+		img, err := png.Decode(src)
+		if err != nil {
+			slog.Warn("Failed decode source image", "path", imagePath, "err", err)
+			goto not_found
+		}
+
+		out, err := os.Create(wantedPath)
+		if err != nil {
+			slog.Warn("Failed to create file", "path", wantedPath, "err", err)
+			goto not_found
+		}
+		defer out.Close()
+
+		if err := gif.Encode(out, img, nil); err != nil {
+			goto not_found
+		}
+		http.ServeFile(w, r, wantedPath)
+		return
+	}
+
+not_found:
+	http.NotFound(w, r)
+}
+
 func getAsnImage(w http.ResponseWriter, r *http.Request) {
 	asn := chi.URLParam(r, "asn")
+	wantedFormat := chi.URLParam(r, "fmt")
 
 	if isMatch, err := regexp.MatchString("^[0-9]+$", asn); err != nil || !isMatch {
-		slog.Info("Bad ASN image request", "asn", asn)
+		slog.Info("Bad ASN image request", "asn", asn, "fmt", wantedFormat)
 		http.NotFound(w, r)
 		return
 	}
@@ -335,13 +413,15 @@ func getAsnImage(w http.ResponseWriter, r *http.Request) {
 	imagePath := filepath.Join(dir, asn+".png")
 	if _, err := os.Stat(imagePath); err == nil {
 		slog.Debug("Found matching ASN image", "asn", asn)
-		http.ServeFile(w, r, imagePath)
+		serveAsnImage(w, r, imagePath, wantedFormat)
 		return
 	}
 
 	slog.Info("No cached ASN logo found", "path", imagePath)
 
 	sourceUrl := fmt.Sprintf("https://static.ui.com/asn/%s_101x101.png", asn)
+	slog.Info("Trying to fetch ASN logo", "url", sourceUrl)
+
 	resp, err := http.Get(sourceUrl)
 	if err != nil {
 		slog.Info("Failed to download ASN logo", "url", sourceUrl, "err", err)
@@ -349,24 +429,24 @@ func getAsnImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("Trying to fetch ASN logo", "url", sourceUrl)
-
 	if resp.StatusCode != 200 {
 		slog.Info("No ASN logo", "url", sourceUrl, "status", resp.StatusCode)
 		http.NotFound(w, r)
 		return
 	}
 
+	slog.Info("Saving ASN logo", "asn", asn, "path", imagePath)
+
 	out, err := os.Create(imagePath)
 	if err != nil {
-		slog.Warn("Failed to save ASN logo", "path", imagePath, "err", err)
+		slog.Warn("Failed to create ASN logo file", "path", imagePath, "err", err)
 		http.NotFound(w, r)
 		return
 	}
-
-	slog.Info("Saving ASN logo", "asn", asn, "path", imagePath)
+	defer out.Close()
 	io.Copy(out, resp.Body)
-	http.ServeFile(w, r, imagePath)
+
+	serveAsnImage(w, r, imagePath, wantedFormat)
 }
 
 func buildRequestdata(r *http.Request) *requestData {

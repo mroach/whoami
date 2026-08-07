@@ -111,6 +111,10 @@ Internet Explorer 6 has strict cross-domain constraints, so it uses JSONP instea
 
 Internet Explorer 5 renders fine, with no IPv6 support.
 
+Internet Explorer 4 renders fine. Supports PNG.
+
+Internet Explorer 3.0 and 2.0. HTTP/1.0-only and work great with the HTML 3.2-version of the page.
+
 ### Safari
 
 Safari 3.0, the version that ships with Mac OS X 10.4 Tiger, supports IPv6 out of
@@ -126,6 +130,18 @@ with IPv6 and XHR for dual-stack IP detection.
 
 Firefox 52.9 ESR is the newest version that runs on Windows XP. It also works fine.
 
+### NCSA Mosaic 3.0 (Windows NT 4)
+
+Mosaic 3.0 supports HTML 3.2 and HTTP/1.0. This means there will be no `Host:` header.
+
+### Opera
+
+* 3.0 tested on Windows NT 4. Works with HTML 3.2
+
 ### Other working
 
-* PlayStation 5
+| Device        | IPv4 | IPv6 | HTTP |
+| ------------- | ---- | ---- | ---- |
+| PlayStation 5 | Yes  | Yes  | 2.0  |
+| LG webOS TV   | Yes  | Yes  | 2.0  |
+| Lynx          | Yes  | Yes  | 1.0  |
