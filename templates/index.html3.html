@@ -6,6 +6,7 @@
     <META NAME="keywords" CONTENT="ip, ip address, http, geoip, html, netadmin">
     <META NAME="description" CONTENT="Showing you your IP address, location, and request details">
     <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+    <META HTTP-EQUIV="PICS-Label" CONTENT='(PICS-1.1 "http://www.rsac.org/ratingsv01.html" labels generic true ratings (n 0 s 0 v 0 l 0))'>
   </HEAD>
   <BODY BGCOLOR="#FFFFFF" BACKGROUND="images/bg-texture.gif">
     <H1><FONT COLOR="#000080">{{.Request.IP}}</FONT></H1>
@@ -76,11 +77,8 @@
 
     <HR>
 
-    <P>
-      <A HREF="https://validator.w3.org/check?uri=referer">
-        <IMG SRC="images/valid-html32.gif" ALT="W3C Valid HTML 3.2" BORDER="0">
-      </A>
-      <CENTER><FONT SIZE="1">Last updated {{.Request.Server.Time}}</FONT></CENTER>
-    </P>
+    <A HREF="https://validator.w3.org/check?uri=referer"><IMG SRC="images/valid-html32.gif" ALT="W3C Valid HTML 3.2" BORDER="0"></A>
+    <IMG SRC="images/rsaclabel.gif" ALT="Rated with RSAC">
+    <CENTER><FONT SIZE="1">Last updated {{.Request.Server.Time}}</FONT></CENTER>
   </BODY>
 </HTML>
