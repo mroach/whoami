@@ -26,6 +26,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/mroach/whoami/internal/eui64"
+	"github.com/mroach/whoami/internal/hitcounter"
 	"github.com/mroach/whoami/internal/ouidb"
 	"github.com/mroach/whoami/internal/version"
 	"github.com/oschwald/geoip2-golang/v2"
@@ -76,6 +77,7 @@ type pageData struct {
 	Title     string
 	Request   *requestData
 	DualStack *dualStackConfig
+	CacheBust string
 }
 
 var funcMap = template.FuncMap{
@@ -86,9 +88,11 @@ var funcMap = template.FuncMap{
 var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles(
 	"templates/index.html3.html",
 	"templates/index.html4.html",
+	"templates/recent.html",
 ))
 var mmCity *geoip2.Reader
 var mmASN *geoip2.Reader
+var hc *hitcounter.HitCounter
 
 func main() {
 	var err error
@@ -122,6 +126,15 @@ func main() {
 		slog.Info("Trusted proxies configured", "networks", trustedProxies)
 	}
 
+	hc, err = hitcounter.New(hitcounter.Config{
+		DatabasePath: "run/db/hits.db",
+		BufferSize:   5,
+	})
+	if err != nil {
+		slog.Warn("HitCounter init failed", "err", err)
+	}
+	defer hc.Close()
+
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.ClientIPFromXFF(trustedProxies...))
@@ -140,12 +153,14 @@ func main() {
 	r.Get("/text", textHandler)
 	r.Get("/ip", ipHandler)
 	r.Get("/images/asn/{asn}.{fmt}", getAsnImage)
+	r.Get("/images/visitor/{ts}.gif", getHitCounter)
 	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
 		"application/json": jsonHandler,
 		"text/html":        htmlHandler,
 		"text/plain":       textHandler,
 	}, "text/html"))
 	r.Get("/html{htmlVer}", htmlHandler)
+	r.Get("/recent", listRecentHandler)
 	fileServer := http.FileServer(http.Dir("./static"))
 	r.Handle("/*", fileServer)
 
@@ -220,6 +235,7 @@ func htmlHandler(w http.ResponseWriter, r *http.Request) {
 		Title:     rd.IP,
 		Request:   rd,
 		DualStack: buildDualStack(r),
+		CacheBust: strconv.FormatInt(time.Now().UTC().Unix(), 32),
 	}
 
 	w.Header().Add("content-type", "text/html")
@@ -343,6 +359,45 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/plain")
 	fmt.Fprintln(w, addr.String())
+}
+
+func listRecentHandler(w http.ResponseWriter, _ *http.Request) {
+	if hc == nil {
+		http.Error(w, "Not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	hits, err := hc.ListRecent(100)
+	if err != nil {
+		http.Error(w, "Failed", http.StatusInternalServerError)
+		return
+	}
+
+	pageData := struct {
+		Hits []hitcounter.LoggedHit
+	}{Hits: hits}
+
+	err = templates.Funcs(funcMap).ExecuteTemplate(w, "recent.html", pageData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getHitCounter(w http.ResponseWriter, r *http.Request) {
+	rd := buildRequestdata(r)
+
+	if hc != nil {
+		hc.LogHit(hitcounter.HitEvent{
+			IP:          remoteAddr(r),
+			UserAgent:   r.Header.Get("user-agent"),
+			HttpVersion: rd.HTTP.Proto,
+			Scheme:      rd.HTTP.Scheme,
+			Country:     rd.CountryCode,
+			ASN:         rd.ASN,
+		})
+	}
+
+	http.ServeFile(w, r, "static/images/clear.gif")
 }
 
 func serveAsnImage(w http.ResponseWriter, r *http.Request, imagePath string, wantedFormat string) {
@@ -600,12 +655,10 @@ func remoteAddr(r *http.Request) netip.Addr {
 	slog.Debug("Remote address detected as", "raddr", raddr)
 
 	if addr, err := netip.ParseAddr(raddr); err == nil {
-		slog.Debug("Got the IP")
 		return addr
 	}
 
 	if addr, err := netip.ParseAddrPort(raddr); err == nil {
-		slog.Debug("Got the IP, with a port")
 		return addr.Addr()
 	}
 
