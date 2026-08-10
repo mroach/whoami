@@ -36,7 +36,7 @@
         </TD>
       </TR>
       <TR>
-        <TH ALIGN="left">{{.Request.HTTP.Scheme | ToUpper}}</TH>
+        <TH ALIGN="left">{{.Request.HTTP.Scheme | ToUpper}}{{if eq .Request.HTTP.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{ end }}</TH>
         <TD>{{.Request.HTTP.Proto}}</TD>
       </TR>
     </TABLE>
