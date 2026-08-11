@@ -39,6 +39,18 @@
         <TH ALIGN="left">{{.Request.HTTP.Scheme | ToUpper}}{{if eq .Request.HTTP.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{ end }}</TH>
         <TD>{{.Request.HTTP.Proto}}</TD>
       </TR>
+      {{ if .Request.MACAddress -}}
+      <TR>
+        <TH ALIGN="left">MAC Address</TH>
+        <TD><CODE>{{.Request.MACAddress}}</CODE></TD>
+      </TR>
+      {{- end }}
+      {{ if .Request.MACVendor -}}
+      <TR>
+        <TH ALIGN="left">Device Vendor</TH>
+        <TD>{{.Request.MACVendor}}</TD>
+      </TR>
+      {{- end }}
     </TABLE>
 
     <HR>
@@ -46,10 +58,10 @@
     <H2>HTTP Headers</H2>
     <TABLE CELLSPACING="0" CELLPADDING="5" BORDER="1">
       {{- range $name, $value := .Request.HTTP.Headers }}
-        <TR>
-          <TH NOWRAP ALIGN="left" VALIGN="top">{{$name}}</TH>
-          <TD><CODE>{{$value}}</CODE></TD>
-        </TR>
+      <TR>
+        <TH NOWRAP ALIGN="left" VALIGN="top">{{$name}}</TH>
+        <TD><CODE>{{$value}}</CODE></TD>
+      </TR>
       {{- end }}
     </TABLE>
 
