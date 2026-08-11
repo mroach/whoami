@@ -90,7 +90,7 @@ func (hc *HitCounter) ListRecent(limit int) ([]LoggedHit, error) {
 			country,
 			asn
 		FROM hits
-		ORDER BY last_seen_on DESC
+		ORDER BY last_seen_on DESC, id DESC
 		LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
