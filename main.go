@@ -90,6 +90,7 @@ var funcMap = template.FuncMap{
 var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles(
 	"templates/index.html3.html",
 	"templates/index.html4.html",
+	"templates/index.wml",
 	"templates/recent.html",
 ))
 var mmCity *geoip2.Reader
@@ -157,10 +158,13 @@ func main() {
 	r.Get("/images/asn/{asn}.{fmt}", getAsnImage)
 	r.Get("/images/visitor/{ts}.gif", getHitCounter)
 	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
-		"application/json": jsonHandler,
-		"text/html":        htmlHandler,
-		"text/plain":       textHandler,
+		"text/vnd.wap.wml":        wmlHandler,
+		"application/vnd.wap.wml": wmlHandler,
+		"text/html":               htmlHandler,
+		"application/json":        jsonHandler,
+		"text/plain":              textHandler,
 	}, "text/html"))
+	r.Get("/wap", wmlHandler)
 	r.Get("/html{htmlVer}", htmlHandler)
 	r.Get("/recent", listRecentHandler)
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -275,6 +279,22 @@ func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func wmlHandler(w http.ResponseWriter, r *http.Request) {
+	rd := buildRequestdata(r)
+
+	page := &pageData{
+		Title:     rd.IP,
+		Request:   rd,
+		CacheBust: strconv.FormatInt(time.Now().UTC().Unix(), 32),
+	}
+
+	w.Header().Add("content-type", "text/vnd.wap.wml")
+
+	// can't put this in the .wml template since `html/template` will escape it into `&lt?xml`
+	fmt.Fprintf(w, "<?xml version=\"1.0\"?>\n")
+	templates.Funcs(funcMap).ExecuteTemplate(w, "index.wml", page)
 }
 
 func jsonHandler(w http.ResponseWriter, r *http.Request) {

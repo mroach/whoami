@@ -1,0 +1,51 @@
+<!DOCTYPE wml PUBLIC "-//WAPFORUM//DTD WML 1.1//EN" "http://www.wapforum.org/DTD/wml_1.1.xml">
+<wml>
+  <head>
+    <meta name="author" content="mroach"/>
+  </head>
+
+  <card id="main" title="ip.mroach.com">
+    <p align="center">{{.Request.IP}}</p>
+
+    {{  if .Request.CountryCode  }}
+    <p>
+      {{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}
+      <img src="images/flags/{{.Request.CountryCode | ToLower}}.gif" alt="{{.Request.CountryName}}"/>
+    </p>
+    {{  end  }}
+
+    {{- if .Request.ISP -}}
+    <p>
+      {{.Request.ISP}} (AS{{.Request.ASN}})
+      <img src="images/asn/{{.Request.ASN}}.png" height="16" width="16" alt=""/>
+    </p>
+    {{- end -}}
+
+    <p>{{.Request.HTTP.Proto}}</p>
+
+    <p><b>Server time:</b> {{.Request.Server.Time}}</p>
+
+    <p>
+      <anchor>
+        <go href="#headers"/>
+        HTTP Headers
+      </anchor>
+    </p>
+
+    <p>
+      <img src="images/visitor/{{.CacheBust}}.gif" alt=""/>
+    </p>
+  </card>
+
+  <card id="headers" title="HTTP Headers">
+    {{- range $name, $value := .Request.HTTP.Headers }}
+    <p><b>{{$name}}:</b> {{$value}}</p>
+    {{- end }}
+    <p>
+      <anchor>
+        <go href="#main"/>
+        Home
+      </anchor>
+    </p>
+  </card>
+</wml>
