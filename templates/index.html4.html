@@ -56,13 +56,17 @@
 
 </table>
 {{end}}
-
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01+RDFa 1.1//EN" "http://www.w3.org/MarkUp/DTD/html401-rdfa11-1.dtd">
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="PICS-Label" content='(PICS-1.1 "http://www.rsac.org/ratingsv01.html" labels generic true ratings (n 0 s 0 v 0 l 0))'>
+    <meta property="og:title" content="{{.Title}} - {{.Request.CountryCode}}">
+    <meta property="og:type" content="website">
+    <meta property="og:description" content="{{.Request.ISP}}">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:site_name" content="{{.UrlBase}}">
     <link rel="icon" href="favicon.ico">
     <link rel="shortcut icon" href="favicon.ico">
     <title>{{.Title}}</title>
@@ -359,7 +363,7 @@
 
       <div style="margin-top: 1em">
         <div>
-          <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01"></a>
+          <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01 + RDFa 1.1"></a>
         </div>
         <img src="images/visitor/{{.CacheBust}}.gif" alt="">
       </div>

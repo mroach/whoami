@@ -65,6 +65,7 @@ type requestData struct {
 	Server      *serverData `json:"server"`
 	TLS         *tlsData    `json:"tls"`
 	HTTP        *httpInfo   `json:"http"`
+	UserAgent   string      `json:"-"`
 }
 
 type dualStackConfig struct {
@@ -78,6 +79,7 @@ type pageData struct {
 	Request   *requestData
 	DualStack *dualStackConfig
 	CacheBust string
+	UrlBase   string
 }
 
 var funcMap = template.FuncMap{
@@ -231,11 +233,20 @@ func buildDualStack(r *http.Request) *dualStackConfig {
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
 	rd := buildRequestdata(r)
 
+	urlBase := rd.HTTP.Scheme + "://" + r.Host
+	if rawUrl := os.Getenv("URL_BASE"); rawUrl != "" {
+		if parsed, err := url.Parse(rawUrl); err != nil {
+			parsed.Scheme = rd.HTTP.Scheme
+			urlBase = parsed.String()
+		}
+	}
+
 	page := &pageData{
 		Title:     rd.IP,
 		Request:   rd,
 		DualStack: buildDualStack(r),
 		CacheBust: strconv.FormatInt(time.Now().UTC().Unix(), 32),
+		UrlBase:   urlBase,
 	}
 
 	w.Header().Add("content-type", "text/html")
@@ -389,7 +400,7 @@ func maybeLogHit(rd *requestData, r *http.Request) {
 	if hc != nil {
 		hc.LogHit(hitcounter.HitEvent{
 			IP:          remoteAddr(r),
-			UserAgent:   r.Header.Get("user-agent"),
+			UserAgent:   rd.UserAgent,
 			HttpVersion: rd.HTTP.Proto,
 			Scheme:      rd.HTTP.Scheme,
 			Country:     rd.CountryCode,
@@ -528,6 +539,7 @@ func buildRequestdata(r *http.Request) *requestData {
 			MaxMindCity: "N/A",
 			MaxMindASN:  "N/A",
 		},
+		UserAgent: r.Header.Get("user-agent"),
 	}
 
 	if addr.Is6() {
