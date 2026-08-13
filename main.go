@@ -268,6 +268,7 @@ func htmlHandler(w http.ResponseWriter, r *http.Request) {
 
 func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	rd := buildRequestdata(r)
+	maybeLogHit(rd, r)
 
 	w.Header().Add("content-type", "application/json")
 
@@ -301,6 +302,7 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 func textHandler(w http.ResponseWriter, r *http.Request) {
 	rd := buildRequestdata(r)
+	maybeLogHit(rd, r)
 
 	w.Header().Add("content-type", "text/plain")
 
@@ -383,9 +385,7 @@ func listRecentHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func getHitCounter(w http.ResponseWriter, r *http.Request) {
-	rd := buildRequestdata(r)
-
+func maybeLogHit(rd *requestData, r *http.Request) {
 	if hc != nil {
 		hc.LogHit(hitcounter.HitEvent{
 			IP:          remoteAddr(r),
@@ -396,6 +396,11 @@ func getHitCounter(w http.ResponseWriter, r *http.Request) {
 			ASN:         rd.ASN,
 		})
 	}
+}
+
+func getHitCounter(w http.ResponseWriter, r *http.Request) {
+	rd := buildRequestdata(r)
+	maybeLogHit(rd, r)
 
 	http.ServeFile(w, r, "static/images/clear.gif")
 }
