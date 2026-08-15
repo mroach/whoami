@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"text/template"
 )
@@ -15,7 +16,11 @@ func (app *App) XHRHandler(w http.ResponseWriter, r *http.Request) {
 	rd := app.buildRequestData(r)
 
 	var buf bytes.Buffer
-	templates.Funcs(funcMap).ExecuteTemplate(&buf, "ipInfo", rd)
+	if err := templates.Funcs(funcMap).ExecuteTemplate(&buf, "ipInfo", rd); err != nil {
+		slog.Error("Template rendering failed", "err", err)
+		http.NotFound(w, r)
+		return
+	}
 
 	payload, _ := json.Marshal(struct {
 		Data any    `json:"data"`

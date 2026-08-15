@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func serveAsnImage(w http.ResponseWriter, r *http.Request, imagePath string, wantedFormat string) {
+func serveAsnImage(w http.ResponseWriter, r *http.Request, imagePath string, wantedFormat string) (ok bool) {
 	slog.Info("Serving ASN image", "source", imagePath, "fmt", wantedFormat)
 
 	dir, file := filepath.Split(imagePath)
@@ -35,52 +35,63 @@ func serveAsnImage(w http.ResponseWriter, r *http.Request, imagePath string, wan
 		return
 	}
 
-	if wantedFormat == "gif" {
-		slog.Info("Converting to GIF", "path", imagePath)
-
-		src, err := os.Open(imagePath)
-		if err != nil {
-			slog.Warn("Failed open source image", "path", imagePath, "err", err)
-			goto not_found
+	ok = true
+	defer func() {
+		if !ok {
+			http.NotFound(w, r)
 		}
-		defer src.Close()
+	}()
 
-		img, err := png.Decode(src)
-		if err != nil {
-			slog.Warn("Failed decode source image", "path", imagePath, "err", err)
-			goto not_found
-		}
-
-		out, err := os.Create(wantedPath)
-		if err != nil {
-			slog.Warn("Failed to create file", "path", wantedPath, "err", err)
-			goto not_found
-		}
-		defer out.Close()
-
-		if err := gif.Encode(out, img, nil); err != nil {
-			goto not_found
-		}
-		http.ServeFile(w, r, wantedPath)
+	if wantedFormat != "gif" {
+		ok = false
 		return
 	}
 
-not_found:
-	http.NotFound(w, r)
+	slog.Info("Converting to GIF", "path", imagePath)
+
+	src, err := os.Open(imagePath)
+	if err != nil {
+		slog.Warn("Failed open source image", "path", imagePath, "err", err)
+		ok = false
+		return
+	}
+	defer src.Close()
+
+	img, err := png.Decode(src)
+	if err != nil {
+		slog.Warn("Failed decode source image", "path", imagePath, "err", err)
+		ok = false
+		return
+	}
+
+	out, err := os.Create(wantedPath)
+	if err != nil {
+		slog.Warn("Failed to create file", "path", wantedPath, "err", err)
+		ok = false
+		return
+	}
+	defer out.Close()
+
+	if err := gif.Encode(out, img, nil); err != nil {
+		return
+	}
+
+	http.ServeFile(w, r, wantedPath)
+	return
 }
 
 func (app *App) ASNImageHandler(w http.ResponseWriter, r *http.Request) {
-	asn := chi.URLParam(r, "asn")
 	wantedFormat := chi.URLParam(r, "fmt")
 
-	if isMatch, err := regexp.MatchString("^[0-9]+$", asn); err != nil || !isMatch {
+	asn, err := strconv.Atoi(chi.URLParam(r, "asn"))
+	if err != nil {
 		slog.Info("Bad ASN image request", "asn", asn, "fmt", wantedFormat)
 		http.NotFound(w, r)
 		return
 	}
 
 	dir := app.Config.ASNImageDir
-	imagePath := filepath.Join(dir, asn+".png")
+	imagePath := filepath.Join(dir, strconv.Itoa(asn)+".png")
 	if _, err := os.Stat(imagePath); err == nil {
 		slog.Debug("Found matching ASN image", "asn", asn)
 		serveAsnImage(w, r, imagePath, wantedFormat)
@@ -89,7 +100,7 @@ func (app *App) ASNImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("No cached ASN logo found", "path", imagePath)
 
-	sourceUrl := fmt.Sprintf("https://static.ui.com/asn/%s_101x101.png", asn)
+	sourceUrl := fmt.Sprintf("https://static.ui.com/asn/%d_101x101.png", asn)
 	slog.Info("Trying to fetch ASN logo", "url", sourceUrl)
 
 	resp, err := http.Get(sourceUrl)

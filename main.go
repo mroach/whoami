@@ -43,6 +43,7 @@ func main() {
 		AllowCredentials: false,
 	}))
 	r.Use(middleware.Heartbeat("/healthz"))
+	r.Use(app.SetRemoteAddr)
 
 	r.Get("/html", app.HTMLHandler)
 	r.Get("/html{htmlVer:[3-5]}", app.HTMLHandler)

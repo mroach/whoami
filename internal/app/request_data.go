@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"log/slog"
@@ -95,7 +96,7 @@ func (loc *Location) String() string {
 }
 
 func (app *App) buildRequestData(r *http.Request) *RequestData {
-	addr := remoteAddr(r)
+	addr := app.GetRemoteAddr(r)
 	data := &RequestData{
 		IP:       buildIPAddress(addr),
 		MAC:      lookupMAC(addr),
@@ -304,26 +305,42 @@ func (app *App) buildServer() Server {
 	}
 }
 
-func remoteAddr(r *http.Request) netip.Addr {
-	// If the IP was set in x-forwarded-for, `GetClientIP` is where we get it
-	raddr := middleware.GetClientIP(r.Context())
+const remoteAddrCtxKey = "remoteAddr"
 
-	// If no XFF was set, then we'll use the normal remote address
-	if raddr == "" {
-		raddr = r.RemoteAddr
+func (app *App) SetRemoteAddr(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raddr := middleware.GetClientIP(r.Context())
+
+		// If no XFF was set, then we'll use the normal remote address
+		if raddr == "" {
+			raddr = r.RemoteAddr
+		}
+
+		slog.Debug("Remote address detected as", "raddr", raddr)
+
+		if addr, err := netip.ParseAddr(raddr); err == nil {
+			slog.Debug("Found the remote address", "addr", addr)
+			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, addr)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		if addr, err := netip.ParseAddrPort(raddr); err == nil {
+			slog.Debug("Found the remote address with a port", "addr", addr)
+			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, addr.Addr())
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		slog.Error("No remote address found")
+		http.Error(w, "No Remote Address", http.StatusBadRequest)
+	})
+}
+
+func (app *App) GetRemoteAddr(r *http.Request) netip.Addr {
+	addr, ok := r.Context().Value(remoteAddrCtxKey).(netip.Addr)
+	if !ok {
+		panic("No remote address found. Bad middleware setup?")
 	}
-
-	slog.Debug("Remote address detected as", "raddr", raddr)
-
-	if addr, err := netip.ParseAddr(raddr); err == nil {
-		return addr
-	}
-
-	if addr, err := netip.ParseAddrPort(raddr); err == nil {
-		return addr.Addr()
-	}
-
-	slog.Warn("No valid IP address from", "raddr", raddr)
-
-	return netip.MustParseAddr("0.0.0.0")
+	return addr
 }
