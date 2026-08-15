@@ -18,7 +18,7 @@ func (app *App) XMLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("content-type", "text/xml")
+	w.Header().Add("content-type", "application/xml")
 	w.Write([]byte(xml.Header))
 	w.Write(bytes)
 	fmt.Fprintln(w)
