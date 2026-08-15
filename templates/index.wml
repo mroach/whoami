@@ -4,24 +4,24 @@
     <meta name="author" content="mroach"/>
   </head>
 
-  <card id="main" title="ip.mroach.com">
-    <p align="center">{{.Request.IP}}</p>
+  <card id="main" title="{{.Title}}">
+    <p align="center">{{.Request.IP.Address}}</p>
 
-    {{  if .Request.CountryCode  }}
+    {{ if .Request.Location }}
     <p>
-      {{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}
-      <img src="images/flags/{{.Request.CountryCode | ToLower}}.gif" alt="{{.Request.CountryName}}"/>
+      {{if .Request.Location.City}}{{.Request.Location.City}}, {{end}}{{.Request.Location.Country.Name}}
+      <img src="images/flags/{{.Request.Location.Country.ISOCode | ToLower}}.gif" alt="{{.Request.Location.Country.Name}}"/>
     </p>
     {{  end  }}
 
-    {{- if .Request.ISP -}}
+    {{- if .Request.ASN -}}
     <p>
-      {{.Request.ISP}} (AS{{.Request.ASN}})
-      <img src="images/asn/{{.Request.ASN}}.png" height="16" width="16" alt=""/>
+      {{.Request.ASN.Name}} (AS{{.Request.ASN.Number}})
+      <img src="images/asn/{{.Request.ASN.Number}}.png" height="16" width="16" alt=""/>
     </p>
     {{- end -}}
 
-    <p>{{.Request.HTTP.Proto}}</p>
+    <p>{{.Request.HTTP.Protocol}}</p>
 
     <p><b>Server time:</b> {{.Request.Server.Time}}</p>
 
@@ -38,8 +38,8 @@
   </card>
 
   <card id="headers" title="HTTP Headers">
-    {{- range $name, $value := .Request.HTTP.Headers }}
-    <p><b>{{$name}}:</b> {{$value}}</p>
+    {{- range $ix, $header := .Request.HTTP.Headers }}
+    <p><b>{{$header.Name}}:</b> {{$header.Value}}</p>
     {{- end }}
     <p>
       <anchor>

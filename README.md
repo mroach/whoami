@@ -84,7 +84,7 @@ services:
     restart: unless-stopped
     volumes:
       # Default path used by `geoipupdate`
-      - /usr/share/GeoIP:/opt/app/run/data/maxmind:ro
+      - /usr/share/GeoIP:/usr/share/GeoIP:ro
 
       # ASN logos/images are cached on disk. You could use a Docker volume for this too.
       - ./asn:/opt/cache/images/asn

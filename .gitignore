@@ -2,4 +2,5 @@ bin/
 /cache
 /tmp
 /data/
+/run/
 !/data/maxmind/.keep

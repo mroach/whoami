@@ -2,53 +2,53 @@
 <HTML>
   <HEAD>
     <TITLE>{{.Title}}</TITLE>
-    <META NAME="GENERATOR" CONTENT="{{.Request.Server.GoVersion}}">
+    <META NAME="GENERATOR" CONTENT="{{.Request.Server.Versions.Go}}">
     <META NAME="keywords" CONTENT="ip, ip address, http, geoip, html, netadmin">
     <META NAME="description" CONTENT="Showing you your IP address, location, and request details">
     <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
     <META HTTP-EQUIV="PICS-Label" CONTENT='(PICS-1.1 "http://www.rsac.org/ratingsv01.html" labels generic true ratings (n 0 s 0 v 0 l 0))'>
   </HEAD>
   <BODY BGCOLOR="#FFFFFF" BACKGROUND="images/bg-texture.gif">
-    <H1><FONT COLOR="#000080">{{.Request.IP}}</FONT></H1>
+    <H1><FONT COLOR="#000080">{{.Request.IP.Address}}</FONT></H1>
 
     <TABLE CELLSPACING="0" CELLPADDING="5" BORDER="1">
       <TR>
         <TH ALIGN="left">Location</TH>
         <TD>
-          {{- if .Request.CountryCode -}}
-            {{if .Request.City}}{{.Request.City}}, {{end}}{{.Request.CountryName}}
-            <IMG SRC="images/flags/{{.Request.CountryCode | ToLower}}.gif" alt="{{.Request.CountryName}}">
+          {{- if .Request.Location }}
+            {{if .Request.Location.City}}{{.Request.Location.City}}, {{end}}{{.Request.Location.Country.Name}}
+            <IMG SRC="images/flags/{{.Request.Location.Country.ISOCode | ToLower}}.gif" alt="{{.Request.Location.Country.Name}}">
           {{- else -}}
             <I>Unknown</I>
-          {{- end -}}
+          {{- end }}
         </TD>
       </TR>
 
       <TR>
         <TH ALIGN="left">ISP</TH>
         <TD>
-          {{- if .Request.ISP -}}
-            {{.Request.ISP}} (AS{{.Request.ASN}})
-            <IMG SRC="images/asn/{{.Request.ASN}}.gif" HEIGHT="16" WIDTH="16" ALT="">
+          {{- if .Request.ASN }}
+            {{.Request.ASN.Name}} (AS{{.Request.ASN.Number}})
+            <IMG SRC="images/asn/{{.Request.ASN.Number}}.gif" HEIGHT="16" WIDTH="16" ALT="">
           {{- else -}}
             <I>Unknown</I>
-          {{- end -}}
+          {{- end }}
         </TD>
       </TR>
       <TR>
         <TH ALIGN="left">{{.Request.HTTP.Scheme | ToUpper}}{{if eq .Request.HTTP.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{ end }}</TH>
-        <TD>{{.Request.HTTP.Proto}}</TD>
+        <TD>{{.Request.HTTP.Protocol}}</TD>
       </TR>
-      {{ if .Request.MACAddress -}}
+      {{ if .Request.MAC -}}
       <TR>
         <TH ALIGN="left">MAC Address</TH>
-        <TD><CODE>{{.Request.MACAddress}}</CODE></TD>
+        <TD><CODE>{{.Request.MAC.Address}}</CODE></TD>
       </TR>
       {{- end }}
-      {{ if .Request.MACVendor -}}
+      {{ if and .Request.MAC .Request.MAC.Vendor -}}
       <TR>
         <TH ALIGN="left">Device Vendor</TH>
-        <TD>{{.Request.MACVendor}}</TD>
+        <TD>{{.Request.MAC.Vendor}}</TD>
       </TR>
       {{- end }}
     </TABLE>
@@ -57,10 +57,10 @@
 
     <H2>HTTP Headers</H2>
     <TABLE CELLSPACING="0" CELLPADDING="5" BORDER="1">
-      {{- range $name, $value := .Request.HTTP.Headers }}
+      {{- range $ix, $header := .Request.HTTP.Headers }}
       <TR>
-        <TH NOWRAP ALIGN="left" VALIGN="top">{{$name}}</TH>
-        <TD><CODE>{{$value}}</CODE></TD>
+        <TH NOWRAP ALIGN="left" VALIGN="top">{{$header.Name}}</TH>
+        <TD><CODE>{{$header.Value}}</CODE></TD>
       </TR>
       {{- end }}
     </TABLE>
@@ -71,18 +71,18 @@
     <TABLE CELLSPACING="0" CELLPADDING="5" BORDER="1">
       <TR>
         <TH ALIGN="left" VALIGN="top">App Version</TH>
-        <TD>{{.Request.Server.AppVersion}}</TD>
+        <TD>{{.Request.Server.Versions.App}}</TD>
       </TR>
       <TR>
         <TH ALIGN="left" VALIGN="top">Go Version</TH>
-        <TD>{{.Request.Server.GoVersion}}</TD>
+        <TD>{{.Request.Server.Versions.App}}</TD>
       </TR>
       <TR>
         <TH ALIGN="left" VALIGN="top">MaxMind (GeoIP)</TH>
         <TD>
-          City: {{.Request.Server.MaxMindCity}}
+          City: {{.Request.Server.Versions.MaxMindCity}}
           <BR>
-          ASN: {{.Request.Server.MaxMindASN}}
+          ASN: {{.Request.Server.Versions.MaxMindASN}}
         </TD>
       </TR>
     </TABLE>

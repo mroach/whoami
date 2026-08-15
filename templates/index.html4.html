@@ -1,53 +1,53 @@
 {{define "ipInfo"}}
 <table cellspacing="0" rules="rows">
   <tr>
-    <th>{{.IPStack}} Address</th>
-    <td><code>{{.IP}}</code></td>
+    <th>{{.IP.Family}} Address</th>
+    <td><code>{{.IP.Address}}</code></td>
   </tr>
 
   <tr>
     <th>Location</th>
     <td>
-      {{if .CountryCode}}
-        <span>{{if .City}}{{.City}}, {{end}}{{.CountryName}}</span>
-        <img src="images/flags/{{.CountryCode | ToLower}}.png" alt="{{.CountryName}}" class="flag">
-      {{else}}
+      {{ if .Location }}
+        <span>{{if .Location.City}}{{.Location.City}}, {{end}}{{.Location.Country.Name}}</span>
+        <img src="images/flags/{{.Location.Country.ISOCode | ToLower}}.png" alt="{{.Location.Country.Name}}" class="flag">
+      {{ else }}
         <i>Unknown</i>
-      {{end}}
+      {{ end }}
     </td>
   </tr>
 
   <tr>
     <th>ISP</th>
     <td>
-      {{if .ISP}}
-        <span>{{.ISP}} (AS{{.ASN}})</span>
-        <img src="images/asn/{{.ASN}}.png" alt="" class="asnlogo">
+      {{if .ASN}}
+        <span>{{.ASN.Name}} (AS{{.ASN.Number}})</span>
+        <img src="images/asn/{{.ASN.Number}}.png" alt="" class="asnlogo">
       {{else}}
         <i>Unknown</i>
       {{end}}
     </td>
   </tr>
 
-  {{if .MACAddress}}
+  {{if .MAC}}
   <tr>
     <th title="Your IPv6 address is generated with EUI-64 which exposes your interface's MAC address">MAC Address</th>
-    <td><code>{{.MACAddress}}</code></td>
+    <td><code>{{.MAC.Address}}</code></td>
   </tr>
   {{end}}
 
-  {{if .MACVendor}}
+  {{if and .MAC .MAC.Vendor}}
   <tr>
     <th>Device Vendor</th>
-    <td>{{.MACVendor}}</td>
+    <td>{{.MAC.Vendor}}</td>
   </tr>
   {{end}}
 
   <tr>
     <th>Scheme</th>
     <td>
-      {{if .TLS}}
-        HTTPS <img src="images/lock.gif" alt="Lock"> (TLS {{.TLS.Version}} / {{.TLS.Cipher}})
+      {{if .HTTP.TLS}}
+        HTTPS <img src="images/lock.gif" alt="Lock"> (TLS {{.HTTP.TLS.Version}} / {{.HTTP.TLS.Cipher}})
       {{else}}
         HTTP
       {{end}}
@@ -62,11 +62,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="PICS-Label" content='(PICS-1.1 "http://www.rsac.org/ratingsv01.html" labels generic true ratings (n 0 s 0 v 0 l 0))'>
-    <meta property="og:title" content="{{.Title}} - {{.Request.CountryCode}}">
+    <meta property="og:title" content="{{.Title}}">
     <meta property="og:type" content="website">
-    <meta property="og:description" content="{{.Request.ISP}}">
     <meta property="og:locale" content="en_GB">
-    <meta property="og:site_name" content="{{.UrlBase}}">
+    <meta property="og:site_name" content="{{.URLBase}}">
     <link rel="icon" href="favicon.ico">
     <link rel="shortcut icon" href="favicon.ico">
     <title>{{.Title}}</title>
@@ -229,12 +228,12 @@
       }
 
       function displayOtherStackHTML(obj) {
-        setDualStackStatus("Your client also supports " + obj.data.ipStack + ".")
+        setDualStackStatus("Your client also supports " + obj.data.ip.family + ".")
         document.getElementById("dual-stack-info").innerHTML = obj.html;
       }
 
       function tryOtherStackJSONP(host) {
-        var url = window.location.protocol + "//" + host + "/ip_info?callback=tryStackCallback";
+        var url = window.location.protocol + "//" + host + "/xhr?callback=tryStackCallback";
 
         setDualStackStatus("Attempting request to " + host + "...");
 
@@ -246,7 +245,7 @@
       }
 
       function tryOtherStackXHR(host) {
-        var url = window.location.protocol + "//" + host + "/ip_info";
+        var url = window.location.protocol + "//" + host + "/xhr";
 
         setDualStackStatus("Attempting XHR request to " + host + "...");
 
@@ -307,12 +306,12 @@
   <body>
     <div class="main">
       <h1>
-        <span id="ip">{{.Request.IP}}</span>
+        <span id="ip">{{.Request.IP.Address}}</span>
       </h1>
 
       <div class="section">
         <h2>Connection</h2>
-        <p style="font-style: italic">Your browser connected with {{.Request.IPStack}}.</p>
+        <p style="font-style: italic">Your client connected with {{.Request.IP.Family}}.</p>
         {{template "ipInfo" .Request}}
       </div>
 
@@ -325,10 +324,10 @@
       <div class="section">
         <h2>HTTP Headers</h2>
         <table cellspacing="0" rules="rows">
-          {{- range $name, $value := .Request.HTTP.Headers }}
+          {{- range $ix, $header := .Request.HTTP.Headers }}
             <tr>
-              <th style="text-wrap: nowrap; vertical-align: top">{{$name}}</th>
-              <td>{{$value}}</td>
+              <th style="text-wrap: nowrap; vertical-align: top">{{$header.Name}}</th>
+              <td>{{$header.Value}}</td>
             </tr>
           {{- end }}
         </table>
@@ -343,17 +342,17 @@
           </tr>
           <tr>
             <th>App Version</th>
-            <td>{{.Request.Server.AppVersion}}</td>
+            <td>{{.Request.Server.Versions.App}}</td>
           </tr>
           <tr>
             <th>Go Version</th>
-            <td>{{.Request.Server.GoVersion}}</td>
+            <td>{{.Request.Server.Versions.Go}}</td>
           </tr>
           <tr>
             <th>MaxMind (GeoIP)</th>
             <td>
-              <div>City: {{.Request.Server.MaxMindCity}}</div>
-              <div>ASN: {{.Request.Server.MaxMindASN}}</div>
+              <div>City: {{.Request.Server.Versions.MaxMindCity}}</div>
+              <div>ASN: {{.Request.Server.Versions.MaxMindASN}}</div>
             </td>
           </tr>
         </table>
