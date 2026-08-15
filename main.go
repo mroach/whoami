@@ -54,12 +54,15 @@ func main() {
 	r.Get("/text", app.TextHandler)
 	r.Get("/wap", app.WAPHandler)
 	r.Get("/xhr", app.XHRHandler)
+	r.Get("/xml", app.XMLHandler)
 	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
 		"text/html":               app.HTMLHandler,
 		"application/json":        app.JSONHandler,
 		"text/plain":              app.TextHandler,
 		"text/vnd.wap.wml":        app.WAPHandler,
 		"application/vnd.wap.wml": app.WAPHandler,
+		"text/xml":                app.XMLHandler,
+		"application/xml":         app.XMLHandler,
 	}, "text/html"))
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 

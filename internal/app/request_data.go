@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/xml"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -36,8 +37,8 @@ type TLS struct {
 }
 
 type HTTPHeader struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Name  string `json:"name" xml:"name,attr"`
+	Value string `json:"value" xml:",chardata"`
 }
 
 type HTTP struct {
@@ -45,14 +46,14 @@ type HTTP struct {
 	Protocol  string       `json:"protocol"`
 	Scheme    string       `json:"scheme"`
 	TLS       *TLS         `json:"tls"`
-	UserAgent string       `json:"-"`
-	Headers   []HTTPHeader `json:"headers"`
+	UserAgent string       `json:"-" xml:"-"`
+	Headers   []HTTPHeader `json:"headers" xml:"Headers>Header"`
 }
 
 type IPAddress struct {
-	Addr    netip.Addr `json:"-"`
-	Address string     `json:"address"`
-	Family  string     `json:"family"`
+	Addr    netip.Addr `json:"-" xml:"-"`
+	Address string     `json:"address" xml:",chardata"`
+	Family  string     `json:"family" xml:"family,attr"`
 }
 
 type MACAddress struct {
@@ -76,6 +77,7 @@ type ASN struct {
 }
 
 type RequestData struct {
+	XMLName  xml.Name    `xml:"Request"`
 	IP       IPAddress   `json:"ip"`
 	MAC      *MACAddress `json:"mac"`
 	Location *Location   `json:"location"`
