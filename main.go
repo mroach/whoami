@@ -13,12 +13,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/mroach/whoami/internal/app"
-	"github.com/mroach/whoami/internal/runtime_config"
+	"github.com/mroach/whoami/internal/appconfig"
 	"github.com/mroach/whoami/internal/version"
 )
 
 func main() {
-	config := runtime_config.Current()
+	config := appconfig.Current()
 
 	// reconfigure default logging to allow customising the level
 	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: config.LogLevel})

@@ -3,19 +3,19 @@ package app
 import (
 	"log/slog"
 
+	"github.com/mroach/whoami/internal/appconfig"
 	"github.com/mroach/whoami/internal/hitcounter"
-	"github.com/mroach/whoami/internal/runtime_config"
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
 type App struct {
-	Config     runtime_config.Config
+	Config     appconfig.Config
 	GeoIPCity  *geoip2.Reader
 	GeoIPASN   *geoip2.Reader
 	HitCounter *hitcounter.HitCounter
 }
 
-func New(config runtime_config.Config) *App {
+func New(config appconfig.Config) *App {
 	app := &App{Config: config}
 	app.loadGeoIPASN()
 	app.loadGeoIPCity()

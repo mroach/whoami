@@ -1,4 +1,4 @@
-package runtime_config
+package appconfig
 
 import (
 	"log/slog"
@@ -85,8 +85,7 @@ func getHitcounterDBPath() string {
 
 func getListenPort() int {
 	strport := os.Getenv("PORT")
-	i, err := strconv.Atoi(strport)
-	if err != nil && i > 0 {
+	if i, err := strconv.Atoi(strport); err == nil && i > 0 {
 		return i
 	}
 	return 8080
