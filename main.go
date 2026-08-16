@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +31,21 @@ func main() {
 
 	slog.Info("Runtime Configuration", "config", config)
 	slog.Info("Setting-up", "ver", version.ToString())
+
+	// Setup a list of mime types we want to handle in order of *our* priority.
+	// Some browsers do not send the `Accept:` header values in an order that makes sense.
+	// For example, Safari 3.0 sends `application/xml` as the top priority.
+	handlerMap := NewHandlerMap("text/html")
+	handlerMap.Add("text/html", app.HTMLHandler)
+	handlerMap.Add("application/xhtml+xml", app.HTMLHandler)
+	handlerMap.Add("text/vnd.wap.wml", app.WAPHandler)
+	handlerMap.Add("application/vnd.wap.wml", app.WAPHandler)
+	handlerMap.Add("text/plain", app.TextHandler)
+	handlerMap.Add("text/xml", app.XMLHandler)
+	handlerMap.Add("application/xml", app.XMLHandler)
+	handlerMap.Add("application/json", app.JSONHandler)
+	handlerMap.Add("text/json", app.JSONHandler)
+	handlerMap.Add("text/x-json", app.JSONHandler)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -56,15 +72,7 @@ func main() {
 	r.Get("/wap", app.WAPHandler)
 	r.Get("/xhr", app.XHRHandler)
 	r.Get("/xml", app.XMLHandler)
-	r.Get("/", contentNegotiate(map[string]http.HandlerFunc{
-		"text/html":               app.HTMLHandler,
-		"application/json":        app.JSONHandler,
-		"text/plain":              app.TextHandler,
-		"text/vnd.wap.wml":        app.WAPHandler,
-		"application/vnd.wap.wml": app.WAPHandler,
-		"text/xml":                app.XMLHandler,
-		"application/xml":         app.XMLHandler,
-	}, "text/html"))
+	r.Get("/", contentNegotiate(handlerMap))
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
 	binding := fmt.Sprintf(":%v", config.ListenPort)
@@ -72,17 +80,53 @@ func main() {
 	log.Fatal(http.ListenAndServe(binding, r))
 }
 
-func contentNegotiate(handlers map[string]http.HandlerFunc, fallback string) http.HandlerFunc {
+func contentNegotiate(hm *handlerMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		supportedMimes := make([]string, 0)
 		for v := range strings.SplitSeq(r.Header.Get("accept"), ",") {
 			accept := strings.TrimSpace(strings.Split(v, ";")[0])
-			if handler := handlers[accept]; handler != nil {
-				handler(w, r)
-				return
+			if accept != "" && accept != "*/*" {
+				supportedMimes = append(supportedMimes, accept)
 			}
 		}
 
-		handler := handlers[fallback]
+		handler := hm.FindBestHandler(supportedMimes)
 		handler(w, r)
 	}
+}
+
+type handlerMap struct {
+	handlers map[string]http.HandlerFunc
+	priority []string
+	fallback string
+}
+
+func NewHandlerMap(fallbackMime string) *handlerMap {
+	return &handlerMap{
+		handlers: make(map[string]http.HandlerFunc, 0),
+		priority: make([]string, 0),
+		fallback: fallbackMime,
+	}
+}
+
+func (hm *handlerMap) Add(mime string, handler http.HandlerFunc) {
+	if _, exists := hm.handlers[mime]; exists {
+		slog.Warn("Overwriting existing handler", "mime", mime)
+	}
+	hm.priority = append(hm.priority, mime)
+	hm.handlers[mime] = handler
+}
+
+func (hm *handlerMap) DefaultHandler() http.HandlerFunc {
+	return hm.handlers[hm.fallback]
+}
+
+func (hm *handlerMap) FindBestHandler(supportedMimes []string) http.HandlerFunc {
+	for _, mime := range hm.priority {
+		if slices.Contains(supportedMimes, mime) {
+			return hm.handlers[mime]
+		}
+	}
+
+	return hm.DefaultHandler()
 }
