@@ -314,6 +314,13 @@ const remoteAddrCtxKey = "remoteAddr"
 
 func (app *App) SetRemoteAddr(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if demoIp := app.Config.DemoIP; demoIp != nil {
+			slog.Info("Using the configured demo IP", "ip", demoIp)
+			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, *demoIp)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
 		raddr := middleware.GetClientIP(r.Context())
 
 		// If no XFF was set, then we'll use the normal remote address

@@ -46,6 +46,9 @@ type Config struct {
 
 	// URL_BASE
 	URLBase string
+
+	// IP to use instead of the actual remote IP. Use for development and demos.
+	DemoIP *netip.Addr
 }
 
 func Current() Config {
@@ -60,6 +63,7 @@ func Current() Config {
 		IPv6Host:         os.Getenv("IPV6_HOST"),
 		URLBase:          getURLBase(),
 		ASNImageDir:      getASNImageDir(),
+		DemoIP:           getDemoIP(),
 	}
 
 	return config
@@ -67,6 +71,14 @@ func Current() Config {
 
 func getASNImageDir() string {
 	return tryEnvOrDefaultPath("ASN_IMAGE_DIR", "run/cache/images/asn")
+}
+
+func getDemoIP() *netip.Addr {
+	if ip, err := netip.ParseAddr(os.Getenv("DEMO_IP")); err == nil {
+		return &ip
+	}
+
+	return nil
 }
 
 func getGeoIPPath(kind string) string {
