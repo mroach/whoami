@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -190,19 +191,23 @@ func buildHttpHeaders(r *http.Request) []HTTPHeader {
 		"x-forwarded-host",
 	}
 
-	for k, v := range r.Header {
+	keys := slices.Collect(maps.Keys(r.Header))
+	slices.Sort(keys)
+
+	for _, k := range keys {
 		// values set by our reverse proxy for us
 		if strings.HasPrefix(strings.ToLower(k), "x-internal-") {
 			continue
 		}
 
-		found := slices.Contains(ignoreHeaders, strings.ToLower(k))
-		if !found {
-			headers = append(headers, HTTPHeader{
-				Name:  k,
-				Value: strings.Join(v, "; "),
-			})
+		if slices.Contains(ignoreHeaders, strings.ToLower(k)) {
+			continue
 		}
+
+		headers = append(headers, HTTPHeader{
+			Name:  k,
+			Value: strings.Join(r.Header.Values(k), "; "),
+		})
 	}
 
 	return headers
