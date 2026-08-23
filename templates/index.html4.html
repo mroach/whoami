@@ -235,6 +235,7 @@
       function tryOtherStackJSONP(host) {
         var url = window.location.protocol + "//" + host + "/xhr?callback=tryStackCallback";
 
+        console.debug("Attempting dual-stack with JSONP to " + url);
         setDualStackStatus("Attempting request to " + host + "...");
 
         var script = document.createElement("script");
@@ -247,6 +248,7 @@
       function tryOtherStackXHR(host) {
         var url = window.location.protocol + "//" + host + "/xhr";
 
+        console.debug("Attempting dual-stack with XHR to " + url);
         setDualStackStatus("Attempting XHR request to " + host + "...");
 
         var xhr = new XMLHttpRequest();
@@ -270,6 +272,27 @@
         xhr.send(null)
       }
 
+      function tryOtherStackXDR(host) {
+        var url = window.location.protocol + "//" + host + "/xhr";
+        console.debug("Attempting dual-stack with XDR to " + url);
+        setDualStackStatus("Attempting XDR request to " + host + "...");
+
+        var xdr = new XDomainRequest();
+        xdr.onload = function() {
+          var obj = JSON.parse(xdr.responseText);
+          displayOtherStackHTML(obj);
+        };
+        xdr.onerror = function() {
+          setDualStackStatus("Request failed. Dual-stack IP appears to be unsupported by your network or client.");
+        };
+        xdr.timeout = 10000;
+        xdr.ontimeout = function() {
+          setDualStackStatus("Request timed-out. Dual-stack IP appears to be unsupported by your network or client.");
+        };
+        xdr.open("GET", url);
+        setTimeout(function() { xdr.send(); }, 0);
+      }
+
       function tryOtherStack() {
         var conf = {{.DualStack}};
         var tryStack = conf.tryStack;
@@ -282,11 +305,14 @@
 
         document.getElementById("dual-stack").style.display = "block";
 
+        // IE8 won't allow cross-domain XHR, but it has `XDomainRequest` for that.
         // IE6 doesn't support XHR to other domains, nor does it support `JSON.parse`.
         // Safari 3.0 doesn't support `JSON` either.
         // XHR is a better user experience since we can detect failures, so prefer that.
         // For these old browsers, try with JSONP.
-        if (typeof window.XMLHttpRequest != "undefined" && typeof JSON != "undefined") {
+        if (typeof window.XDomainRequest != "undefined") {
+          tryOtherStackXDR(tryHost);
+        } else if (typeof window.XMLHttpRequest != "undefined" && typeof JSON != "undefined") {
           tryOtherStackXHR(tryHost);
         } else {
           tryOtherStackJSONP(tryHost);
@@ -297,6 +323,22 @@
         // if a browser is so old that it doesn't have this function, we're done. (Found on Netscape 4.8)
         if (typeof document.getElementById == "undefined") {
           return
+        }
+
+        // allow our code to use `console.log` in old browsers
+        if (typeof window.console == "undefined") {
+          window.console = {};
+        }
+        var methods = ["log", "info", "warn", "error", "debug"];
+        for (var i = 0; i < methods.length; i++) {
+          var method = methods[i];
+          if (typeof window.console[method] == "undefined") {
+            if (typeof window.console.log != "undefined") {
+              window.console[method] = window.console.log;
+            } else {
+              window.console[method] = function() {};
+            }
+          }
         }
 
         tryOtherStack();
