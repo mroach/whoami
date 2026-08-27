@@ -9,7 +9,7 @@
     <META HTTP-EQUIV="PICS-Label" CONTENT='(PICS-1.1 "http://www.rsac.org/ratingsv01.html" labels generic true ratings (n 0 s 0 v 0 l 0))'>
   </HEAD>
   <BODY BGCOLOR="#FFFFFF" BACKGROUND="images/bg-texture.gif">
-    <H1><FONT COLOR="#000080">{{.Request.IP.Address}}</FONT></H1>
+    <H1><FONT COLOR="#000080" FACE="Monaco, Lucida Console, Courier New">{{.Request.IP.Address}}</FONT></H1>
 
     <TABLE CELLSPACING="0" CELLPADDING="5" BORDER="1">
       <TR>
@@ -91,6 +91,10 @@
 
     <A HREF="https://validator.w3.org/check?uri=referer"><IMG SRC="images/valid-html32.gif" ALT="W3C Valid HTML 3.2" BORDER="0"></A>
     <IMG SRC="images/rsaclabel.gif" ALT="Rated with RSAC">
+    <P>
+      <A HREF="/browsers.html">Supported Browsers</A> -
+      Also available in <A HREF="/html4">HTML 4.0</A>
+    </P>
     <CENTER><FONT SIZE="1">Last updated {{.Request.Server.Time}}</FONT></CENTER>
     <IMG SRC="images/visitor/{{.CacheBust}}.gif" ALT="">
   </BODY>

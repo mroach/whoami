@@ -1,0 +1,454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01+RDFa 1.1//EN" "http://www.w3.org/MarkUp/DTD/html401-rdfa11-1.dtd">
+<html>
+  <head>
+    <title>Browser Support</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, Helvetica, sans-serif, sans-serif;
+        font-size: 16px;
+        background-image: url("images/bg-texture.gif");
+      }
+      h2 {
+        margin-top: 2em;
+        border-bottom: 3px solid #449;
+      }
+      h3 {
+        border-bottom: 2px solid #99B;
+      }
+      a img { border: 0; }
+      .main, .footer {
+        width: 800px;
+        margin: 0 auto;
+        padding: 0.5em 1em;
+      }
+      .main {
+        margin: 0 auto;
+        border: 1px solid #aaa;
+        padding-bottom: 1em;
+      }
+      dl dt {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-weight: bold;
+      }
+      dl dd {
+        border-left: 1px solid #aae;
+        margin-left: 1em;
+        padding: 0 1em;
+      }
+      code {
+        color: #522;
+        background-color: #eaeaea;
+        padding: 0 0.2em;
+        font-size: 0.9em;
+      }
+      .footer {
+        margin-top: 2em;
+        border: 1px solid #88C;
+        text-align: center;
+      }
+      table.test-matrix {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      table.test-matrix th,
+      table.test-matrix td {
+        padding: 0.5em 0.3em;
+      }
+      table.test-matrix thead tr th {
+        border-bottom: 1px solid black;
+        text-align: left;
+        background: rgba(128, 128 ,255 ,0.1);
+      }
+      table.test-matrix tbody tr th,
+      table.test-matrix tbody tr td {
+        border-bottom: 1px solid #999;
+      }
+      table.test-matrix tbody tr th {
+        text-align: left;
+        vertical-align: top;
+      }
+      table.test-matrix .yes {
+        color: darkgreen;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <h1>Browser Support</h1>
+
+      <p>
+        This site serves <a href="/html3">HTML 3</a>, <a href="/html4">HTML 4</a>,
+        and <a href="/wap">WAP/WML</a> versions, and automatically
+        tries to pick the optimal version based on request characteristics rather than
+        resorting to user agent sniffing.
+      </p>
+
+      <p>
+        The HTML 4 version attempts to do dual-stack IP detection which requires
+        some JavaScript to initiate the request and handle the response.
+        Browsers that don't understand HTML 4 also won't support IPv6 which is
+        why only the HTML 4 version attempts it.
+      </p>
+
+      <h2>HTML 3.2</h2>
+
+      <p>
+        HTML 3.2 is automatically served to any client that is using HTTP/1.0.
+        Browsers started supporting HTML 4 and HTTP/1.0 at about the same time.
+        These browsers have been tested to ensure there are no rendering problems.
+      </p>
+
+      <h3>Tested Browsers</h3>
+      <dl>
+        <dt>Cyberdog 2.0: Mac OS 9.2</dt>
+        <dd>Perfect.</dd>
+
+        <dt>Internet Explorer 2.0, 3.0: Windows NT 4</dt>
+        <dd>Perfect.</dd>
+
+        <dt>NCSA Mosaic 3.0</dt>
+        <dd>Renders fine, except it doesn't understand the <code>height</code> and <code>width</code> attributes on <code>img</code> tags.</dd>
+
+        <dt>Netscape 3.04, Windows NT</dt>
+        <dd>Perfect.</dd>
+
+        <dt>Netscape 4.x: Mac OS 9.2, Windows NT</dt>
+        <dd>Perfect.</dd>
+
+        <dt>Opera 3.0</dt>
+        <dd>Perfect.</dd>
+      </dl>
+
+      <h2>HTML 4.01</h2>
+
+      <h3>Dual-Stack Detection</h3>
+
+      <p>
+        Several issues arise when trying to do dual-stack IP detection.
+        Detection requires a cross-domain request to another hostname that
+        only resolves to an IPv4 or IPv6 address. JavaScript of some kind is required
+        to initiate this request and do something with the response from the server.
+        The response then needs to be parsed and the DOM manipulated to show the response.
+      </p>
+
+      <h3>Tested Browsers</h3>
+
+      <dl>
+        <dt>Firefox 2: Solairs 10, Windows NT</dt>
+        <dd>Perfect. Dual-stack IP supported on both NT 4 and Solaris.</dd>
+
+        <dt>Firefox 12: Windows 2000</dt>
+        <dd>
+          Newest version that runs on Windows 2000. Supports IPv6 and dual-stack detection. Renders perfectly.
+          Windows 2000 uses EUI-64 IPv6 addresses, so the MAC address and vendor will be displayed.
+        </dd>
+
+        <dt>Internet Explorer 4.01: PocketPC / Windows Mobile</dt>
+        <dd>
+          Renders legibly and actually supports IPv6, but dual-stack detection doesn't work.
+        </dd>
+
+        <dt>Internet Explorer 4: Windows NT 4</dt>
+        <dd>It renders, but doesn't look great. IPv4-only.</dd>
+
+        <dt>iCab 3.0.2: Mac OS 9.2</dt>
+        <dd>Renders perfectly. It'll complain a bit about unknown CSS attributes though.</dd>
+
+        <dt>Internet Explorer 5 Mac OS 9.2, Windows 2000</dt>
+        <dd>No issues. IPv6 not supported on any platform.</dd>
+
+        <dt>Internet Explorer 6, 7</dt>
+        <dd>
+          IE6 supports IPv6, but only on Windows XP, not on Windows 2000.
+          One of the interesting quirks with IPv6 in IE6 is that you can't use
+          an IPv6 address in a URL e.g. <code>http://[2001:db8::80]:8080</code>.
+          <br>
+          IE6 and 7 will not allow cross-origin <code>XMLHttpRequest</code> and do not support CORS,
+          so, JSONP is used for dual-stack detection instead. This works.
+        </dd>
+
+        <dt>Internet Explorer 8.0, 9.0</dt>
+        <dd>
+          IE 8 and 9 support cross-domain requests using the proprietary <code>XDomainRequest</code>.
+          The HTML 4 version of will detect when <code>XDomainRequest</code> is available and use that
+          instead of <code>XMLHttpRequest</code> which works nicely.
+        </dd>
+
+        <dt>LG webOS Browser (Chrome)</dt>
+        <dd>Perfect. Dual-stack IP supported.</dd>
+
+        <dt>Mozilla 1.7: IRIX 6.2</dt>
+        <dd>Perfect. Dual-stack IP not supported despite the OS having IPv6 support.</dd>
+
+        <dt>Mozilla 1.7: Sun Solaris 10</dt>
+        <dd>Perfect. Dual-stack IP supported.</dd>
+
+        <dt>PlayStation 5 (WebKit 605)</dt>
+        <dd>Perfect. Dual-stack IP supported.</dd>
+
+        <dt>Safari 4.0: Mac OS X 10.4</dt>
+        <dd>
+          Perfect. Dual-stack IP supported.
+          Mac OS X uses EUI-64 IPv6 addresses, so the MAC address and vendor will be displayed.
+        </dd>
+      </dl>
+
+      <h2>Test Matrix</h2>
+      <p>
+        The <i>IPv6?</i> indication is if both the OS and browser support it.
+      </p>
+
+      <table class="test-matrix">
+        <thead>
+          <tr>
+            <th>Browser</th>
+            <th>Operating System</th>
+            <th>IPv6?</th>
+            <th>HTML</th>
+            <th>Dual-stack</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Dillo 3</th>
+            <td>Debian 13</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th>iCab 3</th>
+            <td>Mac OS 9.2</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Firefox 2</th>
+            <td>Solaris 10</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>JSONP</code></td>
+          </tr>
+          <tr>
+            <td>Windows NT 4</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>JSONP</code></td>
+          </tr>
+          <tr>
+            <th>Firefox 12</th>
+            <td>Windows 2000</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+          <tr>
+            <th>Firefox 52</th>
+            <td>Windows XP</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 2</th>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 3</th>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Internet Explorer 4</th>
+            <td>Windows Mobile 2003</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Internet Explorer 5</th>
+            <td>Mac OS 9.2</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <td>Windows 2000</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Internet Explorer 6</th>
+            <td>Windows 2000</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <td>Windows XP</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>JSONP</code></td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 7</th>
+            <td>Windows XP</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>JSONP</code></td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 8</th>
+            <td>Windows XP</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XDomainRequest</code></td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 9</th>
+            <td>Windows 7</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XDomainRequest</code></td>
+          </tr>
+          <tr>
+            <th>Internet Explorer 10</th>
+            <td>Windows 7</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+          <tr>
+            <th>Lynx</th>
+            <td>IRIX 6.2</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 3</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Mozilla 1.7</th>
+            <td>IRIX 6.2</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <td>Solaris 10</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>JSONP</code></td>
+          </tr>
+          <tr>
+            <th>NCSA Mosaic 3</th>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <th rowspan="3">NetFront 3</th>
+            <td>Sony Ericsson Aino</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <td>Toshiba TV</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <td>Windows Mobile 2003</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th>Netscape 3</th>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <th rowspan="2">Netscape 4</th>
+            <td>Mac OS 9.2</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <th>Netscape 6</th>
+            <td>Windows XP</td>
+            <td>No</td>
+            <td>HTML 4</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th>Opera 3</th>
+            <td>Windows NT 4</td>
+            <td>No</td>
+            <td>HTML 3</td>
+            <td>Not supported</td>
+          </tr>
+          <tr>
+            <th>Safari 4</th>
+            <td>Mac OS X 10.4</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+          <tr>
+            <th>Servo 0.5</th>
+            <td>Debian 13</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+          <tr>
+            <th>WebKit</th>
+            <td>PlayStation 5</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01 + RDFa 1.1"></a>
+      <img src="images/88x31/get_ie.gif" alt="Get Internet Explorer">
+      <img src="images/88x31/get_netscape.gif" alt="Get Netscape">
+      <img src="images/88x31/get_opera.gif" alt="Get Opera">
+      <img src="images/88x31/cyberdog.gif" alt="Cyberdog">
+      <img src="images/88x31/icab.gif" alt="iCab">
+    </div>
+  </body>
+</html>

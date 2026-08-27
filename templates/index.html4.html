@@ -1,5 +1,5 @@
 {{define "ipInfo"}}
-<table cellspacing="0" rules="rows">
+<table class="data" cellspacing="0" rules="rows">
   <tr>
     <th>{{.IP.Family}} Address</th>
     <td><code>{{.IP.Address}}</code></td>
@@ -121,17 +121,17 @@
         font-size: 2em;
         letter-spacing: 0.1em;
       }
-      table {
+      table.data {
         border-collapse: collapse;
         background-color: #FFF7E9;
         border: 1px solid #B24D7A;
       }
-      table td, table th {
+      table.data td, table th {
         background-color: #FFF7E9;
         border: solid #b24d7a 1px;
         padding: 0.3em 0.8em;
       }
-      table th {
+      table.data th {
         text-align: left;
       }
       div.section {
@@ -383,7 +383,7 @@
 
       <div class="section">
         <h2>HTTP Headers</h2>
-        <table cellspacing="0" rules="rows">
+        <table class="data" cellspacing="0" rules="rows">
           {{- range $ix, $header := .Request.HTTP.Headers }}
             <tr>
               <th style="text-wrap: nowrap; vertical-align: top">{{$header.Name}}</th>
@@ -395,7 +395,7 @@
 
       <div class="section">
         <h2>Server</h2>
-        <table cellspacing="0" rules="rows">
+        <table class="data" cellspacing="0" rules="rows">
           <tr>
             <th>Time</th>
             <td>{{.Request.Server.Time}}</td>
@@ -420,11 +420,18 @@
 
       <hr>
 
-      <div style="margin-top: 1em">
-        <div>
-          <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01 + RDFa 1.1"></a>
-        </div>
-        <img src="images/visitor/{{.CacheBust}}.gif" alt="">
+      <div class="footer" style="margin-top: 1em; font-size: 0.8em; text-align: center;">
+        <table cellspacing="0" cellpadding="5" border="0">
+          <tr>
+            <td><a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01 + RDFa 1.1"></a></td>
+
+            <td><img src="images/visitor/{{.CacheBust}}.gif" alt=""></td>
+
+            <td><a href="/browsers.html">Supported Browsers</a></td>
+
+            <td>Also available in <a href="/html3">HTML 3.2</a></td>
+          </tr>
+        </table>
       </div>
     </div>
   </body>
