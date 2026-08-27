@@ -45,7 +45,7 @@ type Config struct {
 	TrustedProxies []string
 
 	// URL_BASE
-	URLBase string
+	URLBase *url.URL
 
 	// IP to use instead of the actual remote IP. Use for development and demos.
 	DemoIP *netip.Addr
@@ -136,19 +136,19 @@ func getTrustedProxies() []string {
 	return trustedProxies
 }
 
-func getURLBase() string {
+func getURLBase() *url.URL {
 	rawUrl := os.Getenv("URL_BASE")
 	if rawUrl == "" {
-		return ""
+		return nil
 	}
 
 	parsed, err := url.Parse(rawUrl)
 	if err != nil {
 		slog.Warn("Not a valid URL. Ignoring.", "given", rawUrl, "err", err)
-		return ""
+		return nil
 	}
 
-	return parsed.String()
+	return parsed
 }
 
 func parseIPOrPrefix(s string) string {

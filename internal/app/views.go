@@ -3,7 +3,6 @@ package app
 import (
 	"html/template"
 	"net/netip"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -38,10 +37,10 @@ type pageData struct {
 func (app *App) buildPageData(rd *RequestData) pageData {
 	urlBase := rd.HTTP.Scheme + "://" + rd.HTTP.Host
 
-	if configuredUrl := app.Config.URLBase; configuredUrl != "" {
-		base, _ := url.Parse(configuredUrl)
-		base.Scheme = rd.HTTP.Scheme
-		urlBase = base.String()
+	if base := app.Config.URLBase; base != nil {
+		modifiedBase := *base
+		modifiedBase.Scheme = rd.HTTP.Scheme
+		urlBase = modifiedBase.String()
 	}
 
 	pd := pageData{
