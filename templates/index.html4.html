@@ -224,19 +224,33 @@
       }
 
       function tryStackCallback(obj) {
-        displayOtherStackHTML(obj);
+        displayOtherStackHTML(obj.request.ip.family, obj.html);
       }
 
-      function displayOtherStackHTML(obj) {
-        setDualStackStatus("Your client also supports " + obj.data.ip.family + ".")
-        document.getElementById("dual-stack-info").innerHTML = obj.html;
+      function xhrCallback(xmldoc) {
+        data = xmldoc.getElementsByTagName("Data")[0];
+
+        requestData = data.getElementsByTagName("Request")[0];
+        family = requestData.getElementsByTagName("IP")[0].getAttribute("family");
+
+        // IE 5-8 use node.text
+        htmlNode = data.getElementsByTagName("HTML")[0];
+        html = (typeof htmlNode.textContent != "undefined") ? htmlNode.textContent : htmlNode.text;
+
+        displayOtherStackHTML(family, html)
+      }
+
+      function displayOtherStackHTML(family, html) {
+        setDualStackStatus("Your client also supports " + family + ".")
+
+        document.getElementById("dual-stack-info").innerHTML = html;
       }
 
       function tryOtherStackJSONP(host) {
         var url = window.location.protocol + "//" + host + "/xhr?callback=tryStackCallback";
 
         console.debug("Attempting dual-stack with JSONP to " + url);
-        setDualStackStatus("Attempting request to " + host + "...");
+        setDualStackStatus("Attempting JSONP request to " + host + "...");
 
         var script = document.createElement("script");
         script.type = "text/javascript";
@@ -261,8 +275,7 @@
             }
 
             if (xhr.status == 200) {
-              var obj = JSON.parse(xhr.responseText);
-              displayOtherStackHTML(obj);
+              xhrCallback(xhr.responseXML)
               return;
             }
 
@@ -273,14 +286,16 @@
       }
 
       function tryOtherStackXDR(host) {
-        var url = window.location.protocol + "//" + host + "/xhr";
+        var url = window.location.protocol + "//" + host + "/xdr";
         console.debug("Attempting dual-stack with XDR to " + url);
         setDualStackStatus("Attempting XDR request to " + host + "...");
 
         var xdr = new XDomainRequest();
         xdr.onload = function() {
-          var obj = JSON.parse(xdr.responseText);
-          displayOtherStackHTML(obj);
+          // XDR doesn't automatically parse the response XML the way XHR does.
+          var parser = new window.DOMParser();
+          xmldoc = parser.parseFromString(xdr.responseText, "application/xml")
+          xhrCallback(xmldoc);
         };
         xdr.onerror = function() {
           setDualStackStatus("Request failed. Dual-stack IP appears to be unsupported by your network or client.");
@@ -305,14 +320,17 @@
 
         document.getElementById("dual-stack").style.display = "block";
 
-        // IE8 won't allow cross-domain XHR, but it has `XDomainRequest` for that.
-        // IE6 doesn't support XHR to other domains, nor does it support `JSON.parse`.
-        // Safari 3.0 doesn't support `JSON` either.
+        // IE8-9 won't allow cross-domain XHR, but it has `XDomainRequest` for that.
+        // IE5-6 won't allow cross-domain XHR at all.
         // XHR is a better user experience since we can detect failures, so prefer that.
-        // For these old browsers, try with JSONP.
+        //
+        // Checking for `withCredentials` on the XHR object is a decent way to check
+        // if the browser supports CORS with XHR and will not fail.
+        //
+        // For all other browsers, try with JSONP.
         if (typeof window.XDomainRequest != "undefined") {
           tryOtherStackXDR(tryHost);
-        } else if (typeof window.XMLHttpRequest != "undefined" && typeof JSON != "undefined") {
+        } else if (typeof window.XMLHttpRequest != "undefined" && typeof (new XMLHttpRequest()).withCredentials != "undefined") {
           tryOtherStackXHR(tryHost);
         } else {
           tryOtherStackJSONP(tryHost);

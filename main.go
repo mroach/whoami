@@ -70,6 +70,7 @@ func main() {
 	r.Get("/recent", app.ListRecentHandler)
 	r.Get("/text", app.TextHandler)
 	r.Get("/wap", app.WAPHandler)
+	r.Get("/xdr", app.XHRHandler)
 	r.Get("/xhr", app.XHRHandler)
 	r.Get("/xml", app.XMLHandler)
 	r.Get("/", contentNegotiate(handlerMap))

@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -22,16 +23,21 @@ func (app *App) XHRHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, _ := json.Marshal(struct {
-		Data any    `json:"data"`
-		HTML string `json:"html"`
-	}{HTML: buf.String(), Data: rd})
+	payload := struct {
+		XMLName xml.Name `xml:"Data" json:"-"`
+		Request any      `json:"request"`
+		HTML    string   `json:"html"`
+	}{HTML: buf.String(), Request: rd}
 
 	if callback := r.URL.Query().Get("callback"); callback != "" {
+		slog.Debug("Responding with JSONP", "callback", callback)
+		json, _ := json.Marshal(payload)
 		w.Header().Add("content-type", "application/javascript")
-		fmt.Fprintf(w, "%s(%s);", template.JSEscapeString(callback), payload)
+		fmt.Fprintf(w, "%s(%s);", template.JSEscapeString(callback), json)
 	} else {
-		w.Header().Add("content-type", "application/json")
-		w.Write(payload)
+		slog.Debug("Responding with XML")
+		bytes, _ := xml.MarshalIndent(payload, "", "  ")
+		w.Header().Add("content-type", "application/xml")
+		w.Write(bytes)
 	}
 }
