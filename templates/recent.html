@@ -7,7 +7,7 @@
   <BODY BGCOLOR="#FFFFFF" BACKGROUND="images/bg-texture.gif">
     <H1>Recent Visits</H1>
     <TABLE BORDER="1" CELLPADDING="5">
-      <TR BGCOLOR="#DADADA">
+      <TR>
         <TH>Scheme</TH>
         <TH>Version</TH>
         <TH>IP Version</TH>
@@ -15,16 +15,16 @@
         <TH>ASN</TH>
         <TH>User Agent</TH>
       </TR>
-      {{- range $ix, $hit := .Hits -}}
+      {{- range $ix, $hit := .Hits  }}
       <TR>
         <TD>{{ $hit.Scheme }}{{ if eq $hit.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{end}}</TD>
         <TD>{{ $hit.HTTPVersion }}</TD>
         <TD>{{ $hit.IPVersion }}</TD>
         <TD ALIGN="center">{{ if $hit.Country }}<IMG SRC="images/flags/{{$hit.Country | ToLower}}.gif" alt="{{$hit.Country}}">{{ end }}</TD>
-        <TD>{{ $hit.ASN }}</TD>
+        <TD VALIGN="middle" NOWRAP><IMG SRC="/images/asn/{{ $hit.ASN }}.png" HEIGHT="18"> {{ $hit.ASN }}</TD>
         <TD><CODE>{{ $hit.UserAgent }}</CODE></TD>
       </TR>
-      {{- end -}}
+      {{- end  }}
     </TABLE>
   </BODY>
 </HTML>
