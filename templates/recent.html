@@ -8,20 +8,18 @@
     <H1>Recent Visits</H1>
     <TABLE BORDER="1" CELLPADDING="5">
       <TR>
-        <TH>Scheme</TH>
-        <TH>Version</TH>
-        <TH>IP Version</TH>
+        <TH>Protocol</TH>
+        <TH>IP</TH>
         <TH>Country</TH>
         <TH>ASN</TH>
         <TH>User Agent</TH>
       </TR>
       {{- range $ix, $hit := .Hits  }}
       <TR>
-        <TD>{{ $hit.Scheme }}{{ if eq $hit.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{end}}</TD>
-        <TD>{{ $hit.HTTPVersion }}</TD>
-        <TD>{{ $hit.IPVersion }}</TD>
-        <TD ALIGN="center">{{ if $hit.Country }}<IMG SRC="images/flags/{{$hit.Country | ToLower}}.gif" alt="{{$hit.Country}}">{{ end }}</TD>
-        <TD VALIGN="middle" NOWRAP><IMG SRC="/images/asn/{{ $hit.ASN }}.png" HEIGHT="18"> {{ $hit.ASN }}</TD>
+        <TD NOWRAP>{{ $hit.HTTPVersion }}{{ if eq $hit.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{end}}</TD>
+        <TD NOWRAP>{{ $hit.IPVersion }}</TD>
+        <TD NOWRAP ALIGN="center">{{ if $hit.Country }}<IMG SRC="images/flags/{{$hit.Country | ToLower}}.gif" alt="{{$hit.Country}}">{{ end }}</TD>
+        <TD NOWRAP VALIGN="middle" NOWRAP><IMG SRC="/images/asn/{{ $hit.ASN }}.png" HEIGHT="18"> {{ $hit.ASN }}</TD>
         <TD><CODE>{{ $hit.UserAgent }}</CODE></TD>
       </TR>
       {{- end  }}
