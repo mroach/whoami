@@ -85,7 +85,14 @@ func (app *App) ASNImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	asn, err := strconv.Atoi(chi.URLParam(r, "asn"))
 	if err != nil {
-		slog.Info("Bad ASN image request", "asn", asn, "fmt", wantedFormat)
+		slog.Info("Bad ASN image request URL param", "asn", asn, "fmt", wantedFormat)
+		http.NotFound(w, r)
+		return
+	}
+
+	// Don't bother trying to fetch images for reserved or private-use ASNs
+	if asn <= 0 || asn == 23456 || (asn >= 64496 && asn <= 131071) || asn >= 4200000000 {
+		slog.Debug("Ignoring invalid ASN request", "asn", asn)
 		http.NotFound(w, r)
 		return
 	}

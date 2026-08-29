@@ -63,7 +63,7 @@ func main() {
 
 	r.Get("/html", app.HTMLHandler)
 	r.Get("/html{htmlVer:[3-5]}", app.HTMLHandler)
-	r.Get("/images/asn/{asn:[0-9]+}.{fmt:(gif|png)}", app.ASNImageHandler)
+	r.Get("/images/asn/{asn:[1-9][0-9]*}.{fmt:(gif|png)}", app.ASNImageHandler)
 	r.Get("/images/visitor/{ts}.gif", app.HitCounterHandler)
 	r.Get("/ip", app.IPOnlyHandler)
 	r.Get("/json", app.JSONHandler)
