@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /images
+Disallow: /json
+Disallow: /text
+Disallow: /xhr
+Disallow: /xdr
+Disallow: /xml
+Disallow: /wap
