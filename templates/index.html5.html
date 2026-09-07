@@ -1,7 +1,27 @@
 {{- define "ipInfo5" -}}
-<div class="ip-row">
-  <div class="ip-label">{{.IP.Family}}</div>
-  <div class="ip-value">{{.IP.Address}}</div>
+<div>
+  <div class="ip-row">
+    <div class="ip-label">{{.IP.Family}}</div>
+    <div class="ip-value">{{.IP.Address}}</div>
+  </div>
+  {{- with .MAC }}
+  <dl class="kv-grid">
+    <div class="kv">
+      <dt>Address Format</dt>
+      <dd>EUI-64</dd>
+    </div>
+    <div class="kv">
+      <dt>MAC Address</dt>
+      <dd class="mac-address">{{.Address}}</dd>
+    </div>
+    {{with .Vendor}}
+    <div class="kv">
+      <dt>Device Vendor</dt>
+      <dd>{{.}}</dd>
+    </div>
+    {{end}}
+  </dl>
+  {{end}}
 </div>
 {{- end -}}
 <!DOCTYPE html>
@@ -194,6 +214,10 @@
           color: var(--teal);
           word-break: break-all;
         }
+      }
+
+      .mac-address {
+        font-family: var(--font-mono);
       }
 
       #dual-stack.warning {
