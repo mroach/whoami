@@ -61,19 +61,25 @@ func main() {
 	r.Use(middleware.Heartbeat("/healthz"))
 	r.Use(app.SetRemoteAddr)
 
-	r.Get("/html", app.HTMLHandler)
-	r.Get("/html{htmlVer:[3-5]}", app.HTMLHandler)
+	// Most endpoints should not be cached, so they get one extra bit of middleware
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.NoCache)
+
+		r.Get("/html", app.HTMLHandler)
+		r.Get("/html{htmlVer:[3-5]}", app.HTMLHandler)
+		r.Get("/images/visitor/{ts}.gif", app.HitCounterHandler)
+		r.Get("/ip", app.IPOnlyHandler)
+		r.Get("/json", app.JSONHandler)
+		r.Get("/recent", app.ListRecentHandler)
+		r.Get("/text", app.TextHandler)
+		r.Get("/wap", app.WAPHandler)
+		r.Get("/xdr", app.XHRHandler)
+		r.Get("/xhr", app.XHRHandler)
+		r.Get("/xml", app.XMLHandler)
+		r.Get("/", contentNegotiate(handlerMap))
+	})
+
 	r.Get("/images/asn/{asn:[1-9][0-9]*}.{fmt:(gif|png)}", app.ASNImageHandler)
-	r.Get("/images/visitor/{ts}.gif", app.HitCounterHandler)
-	r.Get("/ip", app.IPOnlyHandler)
-	r.Get("/json", app.JSONHandler)
-	r.Get("/recent", app.ListRecentHandler)
-	r.Get("/text", app.TextHandler)
-	r.Get("/wap", app.WAPHandler)
-	r.Get("/xdr", app.XHRHandler)
-	r.Get("/xhr", app.XHRHandler)
-	r.Get("/xml", app.XMLHandler)
-	r.Get("/", contentNegotiate(handlerMap))
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
 	binding := fmt.Sprintf(":%v", config.ListenPort)
