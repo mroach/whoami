@@ -69,8 +69,8 @@ type Country struct {
 }
 
 type Location struct {
-	City    string  `json:"city"`
-	Country Country `json:"country"`
+	City    string   `json:"city"`
+	Country *Country `json:"country"`
 }
 
 type ASN struct {
@@ -213,26 +213,27 @@ func buildHttpHeaders(r *http.Request) []HTTPHeader {
 	return headers
 }
 
-func (app *App) locateIP(addr netip.Addr) *Location {
+func (app *App) locateIP(addr netip.Addr) (location *Location) {
+	location = &Location{}
+
 	if app.GeoIPCity == nil {
-		return nil
+		return
 	}
 
 	city, err := app.GeoIPCity.City(addr)
 	if err != nil {
 		slog.Warn("GeoIP City lookup returned an error", "addr", addr, "err", err)
+		return
 	}
 
 	if !city.HasData() {
 		slog.Info("No GeoIP City data", "addr", addr)
-		return nil
+		return
 	}
 
-	location := &Location{
-		Country: Country{
-			ISOCode: city.Country.ISOCode,
-			Name:    city.Country.Names.English,
-		},
+	location.Country = &Country{
+		ISOCode: city.Country.ISOCode,
+		Name:    city.Country.Names.English,
 	}
 
 	// Avoid results like "Singapore, Singapore" or "Hong Kong, Hong Kong".
@@ -243,7 +244,7 @@ func (app *App) locateIP(addr netip.Addr) *Location {
 
 	slog.Info("GeoIP location lookup successful", "ip", addr.String(), "location", location)
 
-	return location
+	return
 }
 
 func (app *App) lookupASN(addr netip.Addr) *ASN {
