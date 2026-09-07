@@ -12,7 +12,7 @@
     </div>
     <div class="kv">
       <dt>MAC Address</dt>
-      <dd class="mac-address">{{.Address}}</dd>
+      <dd><samp>{{.Address}}</samp></dd>
     </div>
     {{with .Vendor}}
     <div class="kv">
@@ -216,8 +216,9 @@
         }
       }
 
-      .mac-address {
+      samp {
         font-family: var(--font-mono);
+        display: inline;
       }
 
       #dual-stack.warning {
