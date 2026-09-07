@@ -1,0 +1,422 @@
+{{- define "ipInfo5" -}}
+<div class="ip-row">
+  <div class="ip-label">{{.IP.Family}}</div>
+  <div class="ip-value">{{.IP.Address}}</div>
+</div>
+{{- end -}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="icon" href="favicon.ico"/>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <style>
+      :root {
+        --bg: #0B0E14;
+        --panel: #12161F;
+        --line: #232838;
+        --amber: #FFB000;
+        --teal: #4FD1C5;
+        --text: #E8E6DF;
+        --muted: #7C8394;
+        --font-mono: 'IBM Plex Mono', "DejaVu Sans Mono", Monaco, monospace;
+        color-scheme: dark light;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #F5F3EC;
+          --panel: #FFFFFF;
+          --line: #E1DDD0;
+          --amber: #B4600A;
+          --teal: #008080;
+          --text: #1C1E24;
+          --muted: #6B6E78;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+
+        background-color: var(--bg);
+        font-family: 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.1rem clamp(1rem, 4vw, 2.5rem);
+        border-bottom: 1px solid var(--line);
+        background: color-mix(in srgb, var(--bg), transparent 10%);
+        position: sticky;
+        top: 0;
+
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          font-size: 0.95rem;
+
+          .prompt {
+            color: var(--amber);
+          }
+        }
+
+        nav.links {
+          display: flex;
+          align-items: center;
+          gap: 1.6rem;
+          font-size: 0.85rem;
+
+          a {
+            text-decoration: none;
+            color: var(--muted);
+            transition: color 0.15s ease;
+
+            &:hover { color: var(--text); }
+          }
+        }
+      }
+
+      main {
+        max-width: 1024px;
+        margin: 0 auto;
+        padding: clamp(2rem, 6vw, 3.5rem) clamp(0.5rem, 3vw, 1.5rem) 2rem;
+      }
+
+      h2 {
+        font-family: var(--font-mono);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0 0 1rem;
+        color: var(--text);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: clamp(0.5rem, 3vw, 2rem);
+        margin-bottom: 1.5rem;
+      }
+
+      .kv-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.1rem 1.5rem;
+
+        .kv {
+          dt {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06rem;
+            margin-bottom: 0.25rem;
+          }
+          dd {
+            margin: 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+        }
+      }
+
+      .flag {
+        max-height: 22px;
+      }
+
+      .isp-logo {
+        max-height: 22px;
+      }
+
+      .header-list {
+        display: flex;
+        flex-direction: column;
+
+        .header-row {
+          display: grid;
+          grid-template-columns: 200px 1fr;
+          gap: 1rem;
+          padding: 0.6rem 0;
+          font-family: var(--font-mono);
+          font-size: 0.82rem;
+          border-top: 1px solid var(--line);
+
+          &:first-child { border-top: none; }
+
+          .key { color: var(--teal); }
+          .value {
+            color: var(--muted);
+            word-break: break-all;
+          }
+        }
+      }
+
+      .ip-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.4rem 0;
+
+        &+.ip-row {
+          border-top: 1px solid var(--line);
+          margin-top: 0.9rem;
+          padding-top: 1.1rem;
+        }
+
+        .ip-label {
+          font-family: var(--font-mono);
+          font-size: 0.72rem;
+          color: var(--muted);
+          letter-spacing: 0.08em;
+          margin-bottom: 0.35rem;
+        }
+
+        .ip-value {
+          font-family: var(--font-mono);
+          font-size: clamp(0.8rem, 3vw, 2.1rem);
+          font-weight: 500;
+          color: var(--teal);
+          word-break: break-all;
+        }
+      }
+
+      #dual-stack.warning {
+        border-color: var(--amber);
+
+        p {
+          color: var(--amber);
+        }
+      }
+
+      #route-split p {
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 520px) {
+        .header-list {
+          .header-row {
+            grid-template-columns: 1fr;
+            gap: 0.15rem;
+          }
+        }
+
+        .ip-row {
+          display: block;
+        }
+      }
+
+      footer {
+        text-align: center;
+        padding: 1.5rem 1.5rem 2rem;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+
+        a {
+          color: var(--amber);
+          text-decoration: none;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    </style>
+    <script>
+      const primaryRequestData = {{.Request}};
+      const dualStackConfig = {{.DualStack}};
+      const tryStack = dualStackConfig.tryStack;
+      const tryHost = dualStackConfig[tryStack];
+
+      let elDualStack;
+      let elDualStackStatus;
+      let elRouteSplit;
+
+      window.addEventListener("load", () => {
+        elDualStack = document.getElementById("dual-stack");
+        elDualStackStatus = elDualStack.getElementsByClassName("dual-stack-status")[0];
+        elRouteSplit = document.getElementById("route-split");
+
+        tryDualStack();
+      })
+
+      function maybeWarnNetworkSplit(rd) {
+        thisAsn = rd.asn?.number;
+        thisCountry = rd.location?.country?.iso_code;
+
+        if (thisAsn == null || thisCountry == null) {
+          elRouteSplit.remove();
+          return;
+        }
+
+        firstAsn = primaryRequestData.asn?.number;
+        firstCountry = primaryRequestData.location?.country?.iso_code;
+
+        if (firstAsn == thisAsn && firstCountry == thisCountry) {
+          elRouteSplit.remove();
+          return;
+        }
+
+        var msg;
+        const elWarning = elRouteSplit.getElementsByTagName("p")[0];
+
+        if (firstAsn != thisAsn && firstCountry != thisCountry) {
+          msg = `Your ${rd.ip.family} address appears to be in another country and on another ISP: ${rd.asn.name} (AS${thisAsn}) in ${rd.location.country.name}.`;
+        } else if (firstAsn != thisAsn) {
+          msg = `Your ${rd.ip.family} address is on another ISP: ${rd.asn.name} (AS${thisAsn}).`;
+        } else {
+          msg = `Your ${rd.ip.family} address is geo-located to a different country, ${rd.location.country.name}.`;
+        }
+
+        if (msg) {
+          elDualStack.classList.add("warning");
+          elWarning.innerText = msg;
+          elRouteSplit.hidden = false;
+        }
+      }
+
+      function showOtherStack(data) {
+        const container = document.getElementById("ip-addresses");
+
+        let el = document.createElement("template");
+        el.innerHTML = data.html.trim();
+
+        elRouteSplit.insertAdjacentElement('beforebegin', el.content.firstChild);
+
+        elDualStackStatus.hidden = true;
+        elDualStackStatus.remove();
+
+        maybeWarnNetworkSplit(data.request);
+      }
+
+      async function tryDualStack() {
+        elDualStackStatus.hidden = false;
+        elDualStackStatus.textContent = `Attempting ${tryStack} request...`;
+
+        const url = `//${tryHost}/xhr?v=5`;
+        try {
+          const response = await fetch(url, {
+            headers: {
+              "Accept": "application/json"
+            }
+          });
+
+          if (!response.ok) {
+            console.warn(response.status);
+            elDualStackStatus.textContent = `${tryStack} request returned ${response.status}.`;
+            return;
+          }
+
+          const resultObj = await response.json();
+          showOtherStack(resultObj);
+        } catch (error) {
+          elDualStackStatus.textContent = `${tryStack} request failed.`;
+          console.error(error.message);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <div class="brand"><span class="prompt">$</span> <code>whoami --network</code></div>
+      <nav class="links">
+        <a href="/browsers.html">Browsers</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>primary connection</h2>
+
+        {{template "ipInfo5" .Request}}
+      </section>
+
+      <section class="panel" id="dual-stack">
+        <h2>dual-stack ip</h2>
+        <p class="dual-stack-status" hidden></p>
+        <div id="route-split" hidden>
+          <p></p>
+          <p>
+            This is not necessarily a problem, but it's typically a sign of undesirable VPN configuration.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>ip lookup</h2>
+
+        <dl class="kv-grid">
+          <div class="kv">
+            <dt>City</dt>
+            <dd>{{with .Request.Location.City}} {{.}} {{else}} <i>Unknown</i>{{end}}</dd>
+          </div>
+          {{with .Request.Location.Region}}
+          <div class="kv">
+            <dt>Region</dt>
+            <dd>{{.}}</dd>
+          </div>
+          {{end}}
+          <div class="kv">
+            <dt>Country</dt>
+            <dd>
+              {{with .Request.Location.Country}}
+                <img src="images/flags/{{.ISOCode | ToLower}}.png" alt="" class="flag" aria-hidden="true"/>
+                {{.Name}}
+              {{else}}
+                <i>Unknown</i>
+              {{end}}
+            </dd>
+          </div>
+        </dl>
+
+        <dl class="kv-grid">
+          {{with .Request.ASN}}
+          <div class="kv">
+            <dt>ASN</dt>
+            <dd>AS{{.Number}}</dd>
+          </div>
+          <div class="kv" style="grid-column: span 2;">
+            <dt>ISP</dt>
+            <dd>
+              <img src="images/asn/{{.Number}}.png" class="isp-logo" alt="" class="asnlogo" aria-hidden="true"/>
+              {{.Name}}
+            </dd>
+          </div>
+          {{end}}
+        </dl>
+      </section>
+
+      <section class="panel">
+        <h2>request headers</h2>
+
+        <div class="header-list">
+        {{- range $_, $header := .Request.HTTP.Headers }}
+          <div class="header-row">
+            <span class="key"><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/{{$header.Name}}">{{$header.Name}}</a></span>
+            <span class="value">{{$header.Value}}</span>
+          </div>
+        {{- end }}
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Also available in <a href="/html3">HTML 3</a>, <a href="/html4">HTML 4</a>, and <a href="/wap">WAP</a>.
+    </footer>
+  </body>
+</html>

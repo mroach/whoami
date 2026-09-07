@@ -16,6 +16,7 @@ var funcMap = template.FuncMap{
 var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles(
 	"templates/index.html3.html",
 	"templates/index.html4.html",
+	"templates/index.html5.html",
 	"templates/index.wml",
 	"templates/recent.html",
 ))

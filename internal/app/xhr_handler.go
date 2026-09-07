@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"text/template"
 )
 
@@ -17,7 +18,22 @@ func (app *App) XHRHandler(w http.ResponseWriter, r *http.Request) {
 	rd := app.buildRequestData(r)
 
 	var buf bytes.Buffer
-	if err := templates.Funcs(funcMap).ExecuteTemplate(&buf, "ipInfo", rd); err != nil {
+	templateName := "ipInfo"
+	responseFormat := "xml"
+
+	for v := range strings.SplitSeq(r.Header.Get("accept"), ",") {
+		accept := strings.TrimSpace(strings.Split(v, ";")[0])
+		if accept == "application/json" {
+			responseFormat = "json"
+			break
+		}
+	}
+
+	if v := r.URL.Query().Get("v"); v != "" {
+		templateName = "ipInfo" + v
+	}
+
+	if err := templates.Funcs(funcMap).ExecuteTemplate(&buf, templateName, rd); err != nil {
 		slog.Error("Template rendering failed", "err", err)
 		http.NotFound(w, r)
 		return
@@ -29,7 +45,13 @@ func (app *App) XHRHandler(w http.ResponseWriter, r *http.Request) {
 		HTML    string   `json:"html"`
 	}{HTML: buf.String(), Request: rd}
 
-	if callback := r.URL.Query().Get("callback"); callback != "" {
+	if responseFormat == "json" {
+		slog.Debug("Responding with JSON")
+		w.Header().Add("content-type", "application/json")
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		enc.Encode(payload)
+	} else if callback := r.URL.Query().Get("callback"); callback != "" {
 		slog.Debug("Responding with JSONP", "callback", callback)
 		json, _ := json.Marshal(payload)
 		w.Header().Add("content-type", "application/javascript")
