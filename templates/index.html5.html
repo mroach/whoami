@@ -30,8 +30,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
-    <link rel="icon" href="favicon.ico"/>
-    <link rel="shortcut icon" href="favicon.ico"/>
+    <link rel="icon" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
     <style>
       :root {
         --bg: #0B0E14;
@@ -401,7 +401,7 @@
             <dt>Country</dt>
             <dd>
               {{with .Request.Location.Country}}
-                <img src="images/flags/{{.ISOCode | ToLower}}.png" alt="" class="flag" aria-hidden="true"/>
+                <img src="images/flags/{{.ISOCode | ToLower}}.png" alt="" class="flag" aria-hidden="true">
                 {{.Name}}
               {{else}}
                 <i>Unknown</i>
@@ -419,7 +419,7 @@
           <div class="kv" style="grid-column: span 2;">
             <dt>ISP</dt>
             <dd>
-              <img src="images/asn/{{.Number}}.png" class="isp-logo" alt="" class="asnlogo" aria-hidden="true"/>
+              <img src="images/asn/{{.Number}}.png" class="isp-logo" alt="" aria-hidden="true">
               {{.Name}}
             </dd>
           </div>
