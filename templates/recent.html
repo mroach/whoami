@@ -1,28 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W4C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Recent Visits</title>
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+      }
+      a img { border: 0; }
+      table {
+        border-collapse: collapse;
+      }
+      table th,
+      table td {
+        padding: 0.3em 0.3em;
+        border: 1px solid #999;
+      }
+     table thead tr th {
+       border-bottom: 1px solid black;
+       text-align: left;
+       background: rgba(128, 128 ,255 ,0.1);
+     }
+     table tbody tr:hover {
+       background-color: rgba(255,255,255, 0.5);
+     }
+    </style>
+  </head>
+  <body bgcolor="#FFFFFF" background="images/bg-texture.gif">
+    <h1>Recent Visits</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Protocol</th>
+          <th>IP</th>
+          <th>Geo</th>
+          <th>ASN</th>
+          <th>User Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- range $ix, $hit := .Hits  }}
+        <tr>
+          <td nowrap>{{ $hit.HTTPVersion }}{{ if eq $hit.Scheme "https" }} <img src="images/lock.gif" alt="Lock">{{end}}</td>
+          <td nowrap>{{ $hit.IPVersion }}</td>
+          <td nowrap align="center">{{ if $hit.Country }}<img src="images/flags/{{$hit.Country | ToLower}}.gif" alt="{{$hit.Country}}" title="{{$hit.Country}}">{{ end }}</TD>
+          <td nowrap valign="middle">
+            <img src="/images/asn/{{$hit.ASN}}.png" alt="" height="18">
+            <a href="https://bgp.tools/as/{{$hit.ASN}}" target="_blank"><code>{{ $hit.ASN }}</code></a>
+          </td>
+          <td><code>{{ $hit.UserAgent }}</code></td>
+        </tr>
+        {{- end  }}
+      </tbody>
+    </table>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-  <HEAD>
-    <TITLE>Recent Visits</TITLE>
-  </HEAD>
-  <BODY BGCOLOR="#FFFFFF" BACKGROUND="images/bg-texture.gif">
-    <H1>Recent Visits</H1>
-    <TABLE BORDER="1" CELLPADDING="5">
-      <TR>
-        <TH>Protocol</TH>
-        <TH>IP</TH>
-        <TH>Country</TH>
-        <TH>ASN</TH>
-        <TH>User Agent</TH>
-      </TR>
-      {{- range $ix, $hit := .Hits  }}
-      <TR>
-        <TD NOWRAP>{{ $hit.HTTPVersion }}{{ if eq $hit.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{end}}</TD>
-        <TD NOWRAP>{{ $hit.IPVersion }}</TD>
-        <TD NOWRAP ALIGN="center">{{ if $hit.Country }}<IMG SRC="images/flags/{{$hit.Country | ToLower}}.gif" alt="{{$hit.Country}}">{{ end }}</TD>
-        <TD NOWRAP VALIGN="middle" NOWRAP><IMG SRC="/images/asn/{{ $hit.ASN }}.png" HEIGHT="18"> {{ $hit.ASN }}</TD>
-        <TD><CODE>{{ $hit.UserAgent }}</CODE></TD>
-      </TR>
-      {{- end  }}
-    </TABLE>
-  </BODY>
-</HTML>
+    <hr>
+    <a href="https://validator.w3.org/check?uri=referer"><img src="images/valid-html401.png" alt="Valid HTML 4.01 + RDFa 1.1"></a>
+  </body>
+</html>
