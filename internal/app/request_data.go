@@ -315,12 +315,7 @@ const remoteAddrCtxKey = "remoteAddr"
 
 func (app *App) SetRemoteAddr(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if demoIp := app.Config.DemoIP; demoIp != nil {
-			slog.Info("Using the configured demo IP", "ip", demoIp)
-			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, *demoIp)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
+		demoIp := app.Config.DemoIP
 
 		raddr := middleware.GetClientIP(r.Context())
 
@@ -331,22 +326,29 @@ func (app *App) SetRemoteAddr(next http.Handler) http.Handler {
 
 		slog.Debug("Remote address detected as", "raddr", raddr)
 
-		if addr, err := netip.ParseAddr(raddr); err == nil {
+		var addr netip.Addr
+
+		if parsedAddr, err := netip.ParseAddr(raddr); err == nil {
+			addr = parsedAddr
 			slog.Debug("Found the remote address", "addr", addr)
-			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, addr)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-
-		if addr, err := netip.ParseAddrPort(raddr); err == nil {
+		} else if addrPort, err := netip.ParseAddrPort(raddr); err == nil {
+			addr = addrPort.Addr()
 			slog.Debug("Found the remote address with a port", "addr", addr)
-			ctx := context.WithValue(r.Context(), remoteAddrCtxKey, addr.Addr())
-			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+
+		if (addr == netip.Addr{}) {
+			slog.Error("No remote address found")
+			http.Error(w, "No Remote Address", http.StatusBadRequest)
 			return
 		}
 
-		slog.Error("No remote address found")
-		http.Error(w, "No Remote Address", http.StatusBadRequest)
+		if demoIp != nil && addr.Is4() {
+			slog.Info("Using the demo IPv4 address instead", "old", addr, "new", *demoIp)
+			addr = *demoIp
+		}
+
+		ctx := context.WithValue(r.Context(), remoteAddrCtxKey, addr)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
