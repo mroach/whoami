@@ -43,7 +43,9 @@
         --text: #E8E6DF;
         --muted: #7C8394;
         --font-mono: 'IBM Plex Mono', "DejaVu Sans Mono", Monaco, monospace;
-        color-scheme: dark light;
+        --text-xs: 0.75rem;
+        --text-sm: 0.875rem;
+        --text-lg: 1.125rem;
       }
       @media (prefers-color-scheme: light) {
         :root {
@@ -62,6 +64,10 @@
         box-sizing: border-box;
       }
 
+      .text-xs { font-size: var(--text-xs); }
+      .text-sm { font-size: var(--text-sm); }
+      .text-lg { font-size: var(--text-lg); }
+
       body {
         margin: 0;
         color: var(--text);
@@ -78,7 +84,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1.1rem clamp(1rem, 4vw, 2.5rem);
+        padding: 1.1rem clamp(0.5rem, 3vw, 1.5rem);
         border-bottom: 1px solid var(--line);
         background: color-mix(in srgb, var(--bg), transparent 10%);
         position: sticky;
@@ -99,14 +105,16 @@
           display: flex;
           align-items: center;
           gap: 1.6rem;
-          font-size: 0.85rem;
+          font-size: var(--text-sm);
 
           a {
             text-decoration: none;
             color: var(--muted);
             transition: color 0.15s ease;
 
-            &:hover { color: var(--text); }
+            &:hover {
+              color: var(--text);
+            }
           }
         }
       }
@@ -141,7 +149,7 @@
         .kv {
           dt {
             font-family: var(--font-mono);
-            font-size: 0.7rem;
+            font-size: var(--text-xs);
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06rem;
@@ -149,7 +157,7 @@
           }
           dd {
             margin: 0;
-            font-size: 0.95rem;
+            font-size: var(--text-sm);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -168,6 +176,7 @@
       .header-list {
         display: flex;
         flex-direction: column;
+        margin-top: 1rem;
 
         .header-row {
           display: grid;
@@ -175,14 +184,13 @@
           gap: 1rem;
           padding: 0.6rem 0;
           font-family: var(--font-mono);
-          font-size: 0.82rem;
+          font-size: var(--text-sm);
           border-top: 1px solid var(--line);
-
-          &:first-child { border-top: none; }
 
           .key { color: var(--teal); }
           .value {
             color: var(--muted);
+            font-size: var(--text-sm);
             word-break: break-all;
           }
         }
@@ -195,15 +203,9 @@
         gap: 1rem;
         padding: 0.4rem 0;
 
-        &+.ip-row {
-          border-top: 1px solid var(--line);
-          margin-top: 0.9rem;
-          padding-top: 1.1rem;
-        }
-
         .ip-label {
           font-family: var(--font-mono);
-          font-size: 0.72rem;
+          font-size: var(--text-sm);
           color: var(--muted);
           letter-spacing: 0.08em;
           margin-bottom: 0.35rem;
