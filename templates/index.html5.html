@@ -228,8 +228,12 @@
         }
       }
 
-      #route-split p {
-        font-size: 0.9rem;
+      #route-split {
+        border-top: 1px solid var(--amber);
+
+        p {
+          font-size: 0.9rem;
+        }
       }
 
       @media (max-width: 520px) {
@@ -309,7 +313,7 @@
 
         if (msg) {
           elDualStack.classList.add("warning");
-          elWarning.innerText = msg;
+          elWarning.innerText = `${msg} This is not necessarily a problem, but may indicate undesirable VPN or routing configuration.`;
           elRouteSplit.hidden = false;
         }
       }
@@ -375,9 +379,6 @@
         <p class="dual-stack-status" hidden></p>
         <div id="route-split" hidden>
           <p></p>
-          <p>
-            This is not necessarily a problem, but it's typically a sign of undesirable VPN configuration.
-          </p>
         </div>
       </section>
 
