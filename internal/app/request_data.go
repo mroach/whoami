@@ -80,7 +80,7 @@ type ASN struct {
 }
 
 type RequestData struct {
-	XMLName  xml.Name    `xml:"Request"`
+	XMLName  xml.Name    `json:"-" xml:"Request"`
 	IP       IPAddress   `json:"ip"`
 	MAC      *MACAddress `json:"mac"`
 	Location *Location   `json:"location"`
