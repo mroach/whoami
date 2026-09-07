@@ -245,6 +245,17 @@
         }
       }
 
+      .image-with-value {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+
+        img, .icon {
+          height: 1.1rem;
+          width: 1.1rem;
+        }
+      }
+
       @media (max-width: 520px) {
         .header-list {
           .header-row {
@@ -374,6 +385,7 @@
     </script>
   </head>
   <body>
+    {{ InlineSVG "icons" }}
     <header>
       <div class="brand"><span class="prompt">$</span> <code>whoami --network</code></div>
       <nav class="links">
@@ -441,7 +453,38 @@
       </section>
 
       <section class="panel">
-        <h2>request headers</h2>
+        <h2>http request</h2>
+
+        {{with .Request.HTTP}}
+        <div class="kv-grid">
+          <div class="kv">
+            <dt>Scheme</dt>
+            <dd>
+              {{with .TLS}}
+                <div class="image-with-value">
+                  <svg class="icon"><use href="#icon-lock"></use></svg>
+                  <samp>HTTPS / TLS {{.Version}}</samp>
+                </div>
+              {{else}}
+                <div class="image-with-value">
+                  <svg class="icon"><use href="#icon-lock-slash"></use></svg>
+                  <samp>HTTP</samp>
+                </div>
+              {{end}}
+            </dd>
+          </div>
+          <div class="kv">
+            <dt>Protocol</dt>
+            <dd><samp>{{.Protocol}}</samp></dd>
+          </div>
+          {{with .TLS}}
+          <div class="kv">
+            <dt>Cipher</dt>
+            <dd><samp>{{.Cipher}}</samp></dd>
+          </div>
+          {{end}}
+        </div>
+        {{end}}
 
         <div class="header-list">
         {{- range $_, $header := .Request.HTTP.Headers }}

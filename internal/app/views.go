@@ -2,15 +2,18 @@ package app
 
 import (
 	"html/template"
+	"log/slog"
 	"net/netip"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var funcMap = template.FuncMap{
-	"ToLower": strings.ToLower,
-	"ToUpper": strings.ToUpper,
+	"ToLower":   strings.ToLower,
+	"ToUpper":   strings.ToUpper,
+	"InlineSVG": inlineSVG,
 }
 
 var templates = template.Must(template.New("pages").Funcs(funcMap).ParseFiles(
@@ -71,4 +74,16 @@ func (app *App) buildDualStack(addr netip.Addr) dualStackConfig {
 	}
 
 	return dualStackConfig
+}
+
+func inlineSVG(name string) template.HTML {
+	path := "static/images/" + name + ".svg"
+
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		slog.Error("Failed to read SVG", "path", path, "err", err)
+		return template.HTML("")
+	}
+
+	return template.HTML(string(bytes))
 }
