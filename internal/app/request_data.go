@@ -70,6 +70,7 @@ type Country struct {
 
 type Location struct {
 	City    string   `json:"city"`
+	Region  string   `json:"region"`
 	Country *Country `json:"country"`
 }
 
@@ -240,6 +241,14 @@ func (app *App) locateIP(addr netip.Addr) (location *Location) {
 	// Typically also affects Macau, Andorra, Luxembourg, Monaco
 	if city := city.City.Names.English; city != location.Country.Name {
 		location.City = city
+	}
+
+	subdivisionNames := make([]string, 0)
+	for _, s := range city.Subdivisions {
+		subdivisionNames = append(subdivisionNames, s.Names.English)
+	}
+	if len(subdivisionNames) > 0 {
+		location.Region = strings.Join(subdivisionNames, ", ")
 	}
 
 	slog.Info("GeoIP location lookup successful", "ip", addr.String(), "location", location)

@@ -7,19 +7,19 @@
   <card id="main" title="{{.Title}}">
     <p align="center">{{.Request.IP.Address}}</p>
 
-    {{ if .Request.Location }}
+    {{- with .Request.Location }}
     <p>
-      {{if .Request.Location.City}}{{.Request.Location.City}}, {{end}}{{.Request.Location.Country.Name}}
-      <img src="images/flags/{{.Request.Location.Country.ISOCode | ToLower}}.gif" alt="{{.Request.Location.Country.Name}}"/>
+      {{with .City}}{{.}}, {{end}}{{with .Region}}{{.}}, {{end}}{{.Country.Name}}
+      <img src="images/flags/{{.Country.ISOCode | ToLower}}.gif" alt="{{.Country.Name}}"/>
     </p>
     {{  end  }}
 
-    {{- if .Request.ASN -}}
+    {{- with .Request.ASN }}
     <p>
-      {{.Request.ASN.Name}} (AS{{.Request.ASN.Number}})
-      <img src="images/asn/{{.Request.ASN.Number}}.png" height="16" width="16" alt=""/>
+      {{.Name}} (AS{{.Number}})
+      <img src="images/asn/{{.Number}}.png" height="16" width="16" alt=""/>
     </p>
-    {{- end -}}
+    {{- end }}
 
     <p>{{.Request.HTTP.Protocol}}</p>
 

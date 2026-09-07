@@ -15,9 +15,9 @@
       <TR>
         <TH ALIGN="left">Location</TH>
         <TD>
-          {{- if .Request.Location }}
-            {{if .Request.Location.City}}{{.Request.Location.City}}, {{end}}{{.Request.Location.Country.Name}}
-            <IMG SRC="images/flags/{{.Request.Location.Country.ISOCode | ToLower}}.gif" alt="{{.Request.Location.Country.Name}}">
+          {{- with .Request.Location }}
+            {{with .City}}{{.}}, {{end}}{{with .Region}}{{.}}, {{end}}{{.Country.Name}}
+            <IMG SRC="images/flags/{{.Country.ISOCode | ToLower}}.gif" alt="{{.Country.Name}}">
           {{- else -}}
             <I>Unknown</I>
           {{- end }}
@@ -27,9 +27,9 @@
       <TR>
         <TH ALIGN="left">ISP</TH>
         <TD>
-          {{- if .Request.ASN }}
-            {{.Request.ASN.Name}} (AS{{.Request.ASN.Number}})
-            <IMG SRC="images/asn/{{.Request.ASN.Number}}.gif" HEIGHT="16" WIDTH="16" ALT="">
+          {{- with .Request.ASN }}
+            {{.Name}} (AS{{.Number}})
+            <IMG SRC="images/asn/{{.Number}}.gif" HEIGHT="16" WIDTH="16" ALT="">
           {{- else -}}
             <I>Unknown</I>
           {{- end }}
@@ -39,10 +39,10 @@
         <TH ALIGN="left">{{.Request.HTTP.Scheme | ToUpper}}{{if eq .Request.HTTP.Scheme "https" }} <IMG SRC="images/lock.gif" ALT="Lock">{{ end }}</TH>
         <TD>{{.Request.HTTP.Protocol}}</TD>
       </TR>
-      {{ if .Request.MAC -}}
+      {{ with .Request.MAC -}}
       <TR>
         <TH ALIGN="left">MAC Address</TH>
-        <TD><CODE>{{.Request.MAC.Address}}</CODE></TD>
+        <TD><CODE>{{.Address}}</CODE></TD>
       </TR>
       {{- end }}
       {{ if and .Request.MAC .Request.MAC.Vendor -}}

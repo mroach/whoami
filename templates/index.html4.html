@@ -9,7 +9,7 @@
     <th>Location</th>
     <td>
       {{with .Location}}
-        <span>{{if .City}}{{.City}}, {{end}}{{.Country.Name}}</span>
+        <span>{{with .City}}{{.}}, {{end}}{{with .Region}}{{.}}, {{end}}{{.Country.Name}}</span>
         <img src="images/flags/{{.Country.ISOCode | ToLower}}.png" alt="{{.Country.Name}}" class="flag">
       {{else}}
         <i>Unknown</i>
