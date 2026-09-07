@@ -38,6 +38,7 @@
         --panel: #12161F;
         --line: #232838;
         --amber: #FFB000;
+        --red: #D84040;
         --teal: #4FD1C5;
         --text: #E8E6DF;
         --muted: #7C8394;
@@ -50,6 +51,7 @@
           --panel: #FFFFFF;
           --line: #E1DDD0;
           --amber: #B4600A;
+          --red: #740A03;
           --teal: #008080;
           --text: #1C1E24;
           --muted: #6B6E78;
@@ -229,6 +231,10 @@
         }
       }
 
+      p.error, samp.error {
+        color: var(--red);
+      }
+
       #route-split {
         border-top: 1px solid var(--amber);
 
@@ -354,8 +360,13 @@
           const resultObj = await response.json();
           showOtherStack(resultObj);
         } catch (error) {
-          elDualStackStatus.textContent = `${tryStack} request failed.`;
-          console.error(error.message);
+          elDualStackStatus.textContent = `Request failed. Your browser or network may not support ${tryStack}.`;
+          elDualStackStatus.classList.add("error");
+
+          const elMsg = document.createElement("samp");
+          elMsg.classList.add("error", "text-sm");
+          elMsg.innerText = error.message;
+          elDualStackStatus.insertAdjacentElement('afterend', elMsg);
         }
       }
     </script>
