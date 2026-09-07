@@ -13,6 +13,13 @@ import (
 //go:embed oui.csv
 var ouiCSV string
 
+// `oui.csv` represents current owners of an OUI, but we want devices to show up
+// with their contemporary owner. The patches file overwrites current owners
+// with era-appropriate owners e.g. Sun Microsystems instead of Or*cle.
+//
+//go:embed patches.csv
+var patchesCSV string
+
 // Organizationally-Unique Identifier
 // IEEE-assigned 24-bit number to uniquely identify hardware vendors.
 // Typically rendered in 3 hex octets e.g. 08:00:2B, we store them internally
@@ -38,14 +45,18 @@ func ouiFromMAC(mac net.HardwareAddr) (oui OUI) {
 }
 
 func load() {
-	r := csv.NewReader(strings.NewReader(ouiCSV))
+	db = make(map[OUI]string, 40000)
+	loadFrom(ouiCSV)
+	loadFrom(patchesCSV)
+}
+
+func loadFrom(csvData string) {
+	r := csv.NewReader(strings.NewReader(csvData))
 
 	// skip the header
 	if _, err := r.Read(); err != nil {
 		panic(err)
 	}
-
-	db = make(map[OUI]string, 40000)
 
 	for {
 		rec, err := r.Read()
