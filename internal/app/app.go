@@ -50,7 +50,9 @@ func (app *App) logHit(rd *RequestData) {
 	}
 
 	if loc := rd.Location; loc != nil {
-		event.Country = loc.Country.ISOCode
+		if country := rd.Location.Country; country != nil {
+			event.Country = loc.Country.ISOCode
+		}
 	}
 
 	if asn := rd.ASN; asn != nil {
