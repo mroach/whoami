@@ -308,10 +308,10 @@ func (app *App) buildServer() Server {
 	}
 
 	if app.GeoIPASN != nil {
-		versions.MaxMindASN = app.GeoIPASN.Metadata().BuildTime().Format(time.DateTime)
+		versions.MaxMindASN = app.GeoIPASN.Metadata().BuildTime().Format(time.DateOnly)
 	}
 	if app.GeoIPCity != nil {
-		versions.MaxMindCity = app.GeoIPCity.Metadata().BuildTime().Format(time.DateTime)
+		versions.MaxMindCity = app.GeoIPCity.Metadata().BuildTime().Format(time.DateOnly)
 	}
 
 	return Server{
