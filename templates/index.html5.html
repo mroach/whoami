@@ -209,7 +209,7 @@
         <h2>http request</h2>
 
         {{with .Request.HTTP}}
-        <div class="kv-grid">
+        <dl class="kv-grid">
           <div class="kv">
             <dt>Scheme</dt>
             <dd>
@@ -236,7 +236,7 @@
               <dd><samp>{{.Cipher}}</samp></dd>
             </div>
           {{end}}
-        </div>
+        </dl>
         {{end}}
 
         <div class="header-list">
@@ -247,6 +247,39 @@
           </div>
         {{- end }}
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>server</h2>
+
+        {{with .Request.Server}}
+        <dl class="kv-grid">
+          <div class="kv">
+            <dt>Time</dt>
+            <dd><samp>{{.Time}}</samp></dd>
+          </div>
+        </dl>
+        <dl class="kv-grid">
+          <div class="kv">
+            <dt>MaxMind City</dt>
+            <dd><samp>{{.Versions.MaxMindCity}}</samp></dd>
+          </div>
+          <div class="kv">
+            <dt>MaxMind ASN</dt>
+            <dd><samp>{{.Versions.MaxMindASN}}</samp></dd>
+          </div>
+        </dl>
+        <dl class="kv-grid">
+          <div class="kv">
+            <dt>App Version</dt>
+            <dd><samp>{{.Versions.App}}</samp></dd>
+          </div>
+          <div class="kv">
+            <dt>Go</dt>
+            <dd><samp>{{.Versions.Go}}</samp></dd>
+          </div>
+        </dl>
+        {{end}}
       </section>
     </main>
 

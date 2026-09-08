@@ -111,6 +111,9 @@ h2 {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.1rem 1.5rem;
 }
+.kv-grid + .kv-grid {
+  margin-top: 1.1rem;
+}
 .kv-grid .kv dt {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
