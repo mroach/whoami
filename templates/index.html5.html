@@ -40,8 +40,6 @@
     <script>
       const primaryRequestData = {{.Request}};
       const dualStackConfig = {{.DualStack}};
-      const tryStack = dualStackConfig.tryStack;
-      const tryHost = dualStackConfig[tryStack];
 
       let elDualStack;
       let elDualStackStatus;
@@ -105,10 +103,13 @@
       }
 
       async function tryDualStack() {
+        const tryStack = dualStackConfig.tryStack;
+        const tryHost = dualStackConfig[tryStack];
+        const url = `//${tryHost}/xhr?v=5`;
+
         elDualStackStatus.hidden = false;
         elDualStackStatus.textContent = `Attempting ${tryStack} request...`;
 
-        const url = `//${tryHost}/xhr?v=5`;
         try {
           const response = await fetch(url, {
             headers: {
@@ -169,10 +170,10 @@
             <dd>{{with .Request.Location.City}} {{.}} {{else}} <i>Unknown</i>{{end}}</dd>
           </div>
           {{with .Request.Location.Region}}
-          <div class="kv">
-            <dt>Region</dt>
-            <dd>{{.}}</dd>
-          </div>
+            <div class="kv">
+              <dt>Region</dt>
+              <dd>{{.}}</dd>
+            </div>
           {{end}}
           <div class="kv">
             <dt>Country</dt>
@@ -189,17 +190,17 @@
 
         <dl class="kv-grid">
           {{with .Request.ASN}}
-          <div class="kv">
-            <dt>ASN</dt>
-            <dd><a href="https://bgp.tools/as/{{.Number}}" target="_blank">AS{{.Number}}</a></dd>
-          </div>
-          <div class="kv" style="grid-column: span 2;">
-            <dt>ISP</dt>
-            <dd>
-              <img src="images/asn/{{.Number}}.png" class="isp-logo" alt="" aria-hidden="true">
-              {{.Name}}
-            </dd>
-          </div>
+            <div class="kv">
+              <dt>ASN</dt>
+              <dd><a href="https://bgp.tools/as/{{.Number}}" target="_blank">AS{{.Number}}</a></dd>
+            </div>
+            <div class="kv" style="grid-column: span 2;">
+              <dt>ISP</dt>
+              <dd>
+                <img src="images/asn/{{.Number}}.png" class="isp-logo" alt="" aria-hidden="true">
+                {{.Name}}
+              </dd>
+            </div>
           {{end}}
         </dl>
       </section>
@@ -230,10 +231,10 @@
             <dd><samp>{{.Protocol}}</samp></dd>
           </div>
           {{with .TLS}}
-          <div class="kv">
-            <dt>Cipher</dt>
-            <dd><samp>{{.Cipher}}</samp></dd>
-          </div>
+            <div class="kv">
+              <dt>Cipher</dt>
+              <dd><samp>{{.Cipher}}</samp></dd>
+            </div>
           {{end}}
         </div>
         {{end}}
