@@ -84,16 +84,16 @@
 
       <p>
         This site serves <a href="/html3">HTML 3</a>, <a href="/html4">HTML 4</a>,
-        and <a href="/wap">WAP/WML</a> versions, and automatically
+        <a href="/html5">HTML 5</a>, and <a href="/wap">WAP/WML</a> versions, and automatically
         tries to pick the optimal version based on request characteristics rather than
         resorting to user agent sniffing.
       </p>
 
       <p>
-        The HTML 4 version attempts to do dual-stack IP detection which requires
+        The HTML 4 and 5 versions attempts to do dual-stack IP detection which requires
         some JavaScript to initiate the request and handle the response.
         Browsers that don't understand HTML 4 also won't support IPv6 which is
-        why only the HTML 4 version attempts it.
+        why only the HTML 4 and 5 version attempts it.
       </p>
 
       <h2>HTML 3.2</h2>
@@ -155,17 +155,17 @@
         </dd>
 
         <dt>Internet Explorer 4: Windows NT 4</dt>
-        <dd>It renders, but doesn't look great. IPv4-only.</dd>
+        <dd>Works well. IPv6 supported<sup><a href="#ipv6-nt4">*</a></sup> but dual-stack detection does not work.</dd>
 
         <dt>iCab 3.0.2: Mac OS 9.2</dt>
         <dd>Renders perfectly. It'll complain a bit about unknown CSS attributes though.</dd>
 
         <dt>Internet Explorer 5 Mac OS 9.2, Windows 2000</dt>
-        <dd>No issues. IPv6 not supported on any platform.</dd>
+        <dd>No issues. IPv6 supported on Windows.<sup><a href="#ipv6-win2k">&dagger;</a></sup></dd>
 
         <dt>Internet Explorer 6, 7</dt>
         <dd>
-          IE6 supports IPv6, but only on Windows XP, not on Windows 2000.
+          IPv6 supported natively on Windows XP.
           One of the interesting quirks with IPv6 in IE6 is that you can't use
           an IPv6 address in a URL e.g. <code>http://[2001:db8::80]:8080</code>.
           <br>
@@ -189,15 +189,59 @@
         <dt>Mozilla 1.7: Sun Solaris 10</dt>
         <dd>Perfect. Dual-stack IP supported.</dd>
 
-        <dt>PlayStation 5 (WebKit 605)</dt>
-        <dd>Perfect. Dual-stack IP supported.</dd>
-
         <dt>Safari 4.0: Mac OS X 10.4</dt>
         <dd>
           Perfect. Dual-stack IP supported.
           Mac OS X uses EUI-64 IPv6 addresses, so the MAC address and vendor will be displayed.
         </dd>
       </dl>
+
+      <hr>
+
+      <a name="ipv6-nt4"></a>
+      <p>
+        <sup>*</sup> IPv6 support on Windows NT 4 requires installing the IPv6 Technology Preview.
+        To get IPv6 support in Internet Explorer, you need to manually ugprade <code>wininet.dll</code>
+        with the version from the IPv6Kit after installing IPv6:
+      </p>
+      <ol>
+        <li>Back-up your existing file: <code>rename c:\winnt\system32\wininet.dll wininet.old</code></li>
+        <li>Swap-in the new file: <code>copy c:\ipv6kit\wininet.dll c:\winnt\system32\</code></li>
+        <li>Reboot</li>
+      </ol>
+
+      <a name="ipv6-win2k"></a>
+      <p>
+        <sup>&dagger;</sup> IPv6 support on Windows 2000 requires installing the IPv6 Technology Preview.
+        The installer for requires <em>exactly</em> Service Pack 1 and Internet Explorer 5.0
+        so it can overwrite <code>wininet.dll</code> with a patched version supporting IPv6.
+        If you're on a later service pack or version of IE, the installer won't overwrite the DLL
+        which will leave IE without IPv6 support. Firefox will still work though.
+      </p>
+
+      <h2>HTML 5</h2>
+
+      <p>
+        If a browser is modern enough to send <code>Sec-Fetch-*</code> headers, it will be served the HTML 5 version.
+        Feature-wise it's about the same as HTML 4, but it renders more nicely on phones and tablets.
+        The benchmark browser is PlayStation 5. It doesn't support CSS features like nesting.
+      </p>
+
+      <h3>Tested Browsers</h3>
+      <dl>
+        <dt>PlayStation 5 (WebKit 605)</dt>
+        <dd>Perfect. Dual-stack IP supported.</dd>
+
+        <dt>Firefox 154</dt>
+        <dd>Perfect.</dd>
+
+        <dt>Chrome 150</dt>
+        <dd>Perfect.</dd>
+
+        <dt>Servo 0.5</dt>
+        <dd>Everything works except <code>&lt;svg&gt;</code> with <code>&lt;use&gt;</code>.</dd>
+      </dl>
+
 
       <h2>Test Matrix</h2>
       <p>
@@ -230,7 +274,7 @@
             <td>Not supported</td>
           </tr>
           <tr>
-            <th>Edge (Legacy)</th>
+            <th>Edge 18 (Legacy)</th>
             <td>Windows 10</td>
             <td><strong class="yes">Yes</strong></td>
             <td>HTML 4</td>
@@ -286,22 +330,28 @@
           </tr>
           <tr>
             <td>Windows NT 4</td>
-            <td>No</td>
+            <td><strong class="yes">Yes</strong></td>
             <td>HTML 4</td>
             <td>Not supported</td>
           </tr>
           <tr>
-            <th rowspan="2">Internet Explorer 5</th>
+            <th rowspan="3">Internet Explorer 5</th>
             <td>Mac OS 9.2</td>
             <td>No</td>
             <td>HTML 4</td>
             <td>Not supported</td>
           </tr>
           <tr>
-            <td>Windows 2000</td>
-            <td>No</td>
+            <td>Windows NT 4</td>
+            <td><strong class="yes">Yes</strong></td>
             <td>HTML 4</td>
-            <td>Not supported</td>
+            <td>Not Supported</td>
+          </tr>
+          <tr>
+            <td>Windows 2000</td>
+            <td><strong class="yes">Yes</strong></td>
+            <td>HTML 4</td>
+            <td><code>XMLHttpRequest</code></td>
           </tr>
           <tr>
             <th rowspan="2">Internet Explorer 6</th>
@@ -449,15 +499,15 @@
             <th>Servo 0.5</th>
             <td>Debian 13</td>
             <td><strong class="yes">Yes</strong></td>
-            <td>HTML 4</td>
-            <td><code>XMLHttpRequest</code></td>
+            <td>HTML 5</td>
+            <td><code>fetch</code></td>
           </tr>
           <tr>
             <th>WebKit</th>
             <td>PlayStation 5</td>
             <td><strong class="yes">Yes</strong></td>
-            <td>HTML 4</td>
-            <td><code>XMLHttpRequest</code></td>
+            <td>HTML 5</td>
+            <td><code>fetch</code></td>
           </tr>
         </tbody>
       </table>
