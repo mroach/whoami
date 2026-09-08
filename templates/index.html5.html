@@ -140,7 +140,7 @@
   <body>
     {{ InlineSVG "icons" }}
     <header>
-      <div class="brand"><span class="prompt">$</span> <code>whoami --network</code></div>
+      <h1 class="brand">{{.Request.HTTP.Host}}</h1>
       <nav class="links">
         <a href="/browsers.html">Browsers</a>
       </nav>
